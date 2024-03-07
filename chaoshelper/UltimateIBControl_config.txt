@@ -1,0 +1,191 @@
+LAYOUT: UltimateIBControl.Layout
+Home_Button_01,Main,/ub mexec $CHTab=Main
+Home_Button_02,Switch to Default UI,/ub mexec $CHProfile=Default; $CHTab=Basic
+Home_Button_03,Options,/ub mexec $CHTab=Opts
+Home_Button_04,Adv Options,/ub mexec $CHTab=AdvOpts
+Home_Button_05,Ranges,/ub mexec $CHTab=Ranges
+Home_Button_06,Combat,/ub mexec $CHTab=Combat
+Home_Button_07,Combat Options,/ub mexec $CHTab=CombatOpts
+Home_Button_08,Combat Ranges,/ub mexec $CHTab=CombatRanges
+Home_Button_09,Movement,/ub mexec $CHTab=Movement
+Home_Button_10,Jumping,/ub mexec $CHTab=Jumping
+Home_Button_11,Recalls,/ub mexec $CHTab=Recalls
+Home_Button_12,Nav,/ub mexec $CHTab=Nav
+Home_Button_13,NPCs,/ub mexec $CHTab=NPC
+Home_Button_14,Items/Looting,/ub mexec $CHTab=Items
+Home_Button_16,Actions,/ub mexec $CHTab=Actions
+Home_Button_17,Jump Nearby,/ub mexec $CHTab=JumpingNearby
+Home_Button_18,Quests,/ub mexec $CHTab=Quests
+Home_Button_19,Consumables,/ub mexec $CHTab=Consumables
+Home_Button_20,Summons,/ub mexec $CHTab=Summons
+Home_Button_21,NOTSET,#Command
+Main_Button_01,Follow,/ub mexec $ch_cmd_issue=`#action follow`
+Main_Button_02,Stay,/ub mexec $ch_cmd_issue=`#action stay`
+Main_Button_03,Go To Home,/ub mexec $CHTab=Home
+Main_Button_04,Nav On,/ub mexec $ch_cmd_issue=`#optset enablenav true`
+Main_Button_05,Nav Off,/ub mexec $ch_cmd_issue=`#optset enablenav false`
+Main_Button_06,Movement,/ub mexec $CHTab=Movement
+Main_Button_07,Combat On,/ub mexec $ch_cmd_issue=`#optset enablecombat true`
+Main_Button_08,Combat Off,/ub mexec $ch_cmd_issue=`#optset enablecombat false`
+Main_Button_09,Combat,/ub mexec $CHTab=Combat
+Main_Button_10,All On,/ub mexec $ch_cmd_issue=`#action all on` 
+Main_Button_11,All Off,/ub mexec $ch_cmd_issue=`#action all off`
+Main_Button_12,Options,/ub mexec $CHTab=Opts
+Main_Button_13,Buff On,/ub mexec $ch_cmd_issue=`#optset enablebuffing true`
+Main_Button_14,Buff Off,/ub mexec $ch_cmd_issue=`#optset enablebuffing false`
+Main_Button_15,Adv Options,/ub mexec $CHTab=AdvOpts
+Main_Button_16,Loot All,/ub mexec $ch_cmd_issue=`#action loot all`
+Main_Button_16,Loot Rares Only,/ub mexec $ch_cmd_issue=`#action rares only`
+Main_Button_17,Items/Looting,/ub mexec $CHTab=Items
+Main_Button_18,Force Buff,/ub mexec $ch_cmd_issue=`#action buff`
+Main_Button_19,Cancel Buff,/ub mexec $ch_cmd_issue=`#optset enablebuffing false`
+Main_Button_20,NOTSET,#Command
+Main_Button_21,NOTSET,#Command
+Main_Button_22,NOTSET,#Command
+Main_Button_23,NOTSET,#Command
+Main_Button_24,NOTSET,#Command
+Main_Button_25,NOTSET,#Command
+Main_Button_26,NOTSET,#Command
+Main_Button_27,Last Btn,#Command
+Combat_Button_01,NOTSET,#Command
+Combat_Button_02,NOTSET,#Command
+Combat_Button_03,Go to Home,/ub mexec $CHTab=Home
+Combat_Button_04,NOTSET,#Command
+Combat_Button_05,NOTSET,#Command
+Combat_Button_06,NOTSET,#Command
+Combat_Button_07,NOTSET,#Command
+Combat_Button_08,NOTSET,#Command
+Combat_Button_09,NOTSET,#Command
+Combat_Button_10,NOTSET,#Command
+Combat_Button_11,NOTSET,#Command
+Combat_Button_12,NOTSET,#Command
+Combat_Button_13,NOTSET,#Command
+Combat_Button_14,NOTSET,#Command
+Combat_Button_15,NOTSET,#Command
+Combat_Button_16,NOTSET,#Command
+Combat_Button_17,NOTSET,#Command
+Combat_Button_18,NOTSET,#Command
+Combat_Button_19,NOTSET,#Command
+Combat_Button_20,NOTSET,#Command
+Combat_Button_21,Testing123,#Command
+Movement_Button_01,Follow,/ub mexec $ch_cmd_issue=`#action follow`
+Movement_Button_02,Stay,/ub mexec $ch_cmd_issue=`#action stay`
+Movement_Button_03,Go to Home,/ub mexec $CHTab=Home
+Movement_Button_04,Closest Portal,/ub mexec $ch_cmd_issue=`#action ucp`
+Movement_Button_05,Portal Device,/ub mexec $ch_cmd_issue=`#portaldevice`
+Movement_Button_06,Basic,/ub mexec $CHTab=Basic
+Movement_Button_07,Nav On,/ub mexec $ch_cmd_issue=`#optset enablenav true`
+Movement_Button_08,Nav Off,/ub mexec $ch_cmd_issue=`#optset enablenav false`
+Movement_Button_09,Combat,/ub mexec $CHTab=Combat
+Movement_Button_10,Nav Only,/ub mexec $ch_cmd_issue=`#action nav only`
+Movement_Button_11,Chase,/ub mexec $ch_cmd_issue=`#action chase`
+Movement_Button_12,Options,/ub mexec $CHTab=Opts
+Movement_Button_13,Nav Boost On,/ub mexec $ch_cmd_issue=`#optset navpriorityboost true`
+Movement_Button_14,Nav Boost Off,/ub mexec $ch_cmd_issue=`#optset navpriorityboost false`
+Movement_Button_15,Ranges,/ub mexec $CHTab=Ranges
+Movement_Button_16,Corners On,/ub mexec $ch_cmd_issue=`#optset followaroundcorners true`
+Movement_Button_17,Corners Off,/ub mexec $ch_cmd_issue=`#optset followaroundcorners false`
+Movement_Button_18,Open Doors On,/ub mexec $ch_cmd_issue=`#optset opendoors true`
+Movement_Button_19,Wait For Me,/ub mexec $ch_cmd_issue=`#waitforme`
+Movement_Button_20,Get Over Here,/ub mexec $ch_cmd_issue=`#getoverhere`
+Movement_Button_21,Open Doors Off,/ub mexec $ch_cmd_issue=`#optset opendoors false`
+Movement_Button_22,NOTSET,#Command
+Movement_Button_23,NOTSET,#Command
+Movement_Button_24,NOTSET,#Command
+NPC_Button_01,Talk to Closest,/ub mexec $ch_cmd_issue=`#talk closest`
+NPC_Button_02,Closest w/Confirm,/ub mexec $ch_cmd_issue=`#talkwithconfirmation closest`
+NPC_Button_03,Go to Home,/ub mexec $CHTab=Home
+NPC_Button_04,Talk,/ub mexec $ch_cmd_build=talk
+NPC_Button_05,Talk w/Confirm,/ub mexec $ch_cmd_build=talkwithconfirmation
+NPC_Button_06,Cancel Action,/ub mexec $ch_cmd_issue=`#cancel`
+NPC_Button_07,Closest Vendor,/ub mexec $ch_cmd_issue=`#vendor closest`
+NPC_Button_08,Recomp at Celd,/ub mexec $ch_cmd_issue=`#action recomp`
+NPC_Button_09,Give One to NPC,/ub mexec $ch_cmd_build=givenpc
+NPC_Button_10,Give One to NPC w/Conf,/ub mexec $ch_cmd_build=givenpcwithconfirmation
+NPC_Button_11,Give All to NPC,/ub mexec $ch_cmd_build=giveallnpc
+NPC_Button_12,Give All to NPC w/Conf,/ub mexec $ch_cmd_build=giveallnpcwithconfirmation
+NPC_Button_13,NOTSET,#Command
+NPC_Button_14,NOTSET,#Command
+NPC_Button_15,NOTSET,#Command
+NPC_Button_16,NOTSET,#Command
+NPC_Button_17,NOTSET,#Command
+NPC_Button_18,NOTSET,#Command
+Items_Button_01,Loot On,/ub mexec $ch_cmd_issue=`#optset enablelooting true`
+Items_Button_02,Loot Off,/ub mexec $ch_cmd_issue=`#optset enablelooting false`
+Items_Button_03,Go to Home,/ub mexec $CHTab=Home
+Items_Button_04,Loot Item,/ub mexec $ch_cmd_build=loot
+Items_Button_05,Loot From Corpse,/ub mexec $ch_cmd_build=lootcorpse
+Items_Button_06,Cancel Action,/ub mexec $ch_cmd_issue=`#cancel`
+Items_Button_07,Pickup Item,/ub mexec $ch_cmd_build=pickup
+Items_Button_08,Pickup Unique,/ub mexec $ch_cmd_build=pickupunique
+Items_Button_09,Drop All of Item,/ub mexec $ch_cmd_build=dropall
+Items_Button_10,Give One to NPC,/ub mexec $ch_cmd_build=givenpc
+Items_Button_11,Give One to NPC w/Conf,/ub mexec $ch_cmd_build=`#command givenpcwithconfirmation
+Items_Button_12,Give All to NPC,/ub mexec $ch_cmd_build=giveallnpc
+Items_Button_13,Give All to NPC w/Conf,/ub mexec $ch_cmd_build=giveallnpcwithconfirmation
+Items_Button_14,Item Count,/ub mexec $ch_cmd_build=itemcount
+Items_Button_15,Item Absence,/ub mexec $ch_cmd_build=itemabsent
+Items_Button_16,Burden Check,/ub mexec $ch_cmd_issue=`#burdencheck`
+Items_Button_17,Loot All,/ub mexec $ch_cmd_issue=`#action loot all`
+Items_Button_18,Rares Only,/ub mexec $ch_cmd_issue=`#action rares only`
+Items_Button_19,Ranges,/ub mexec $CHTab=Ranges
+Items_Button_20,NOTSET,#Command
+Items_Button_21,NOTSET,#Command
+Items_Button_22,NOTSET,#Command
+Options_Button_01,Go to Advanced,/ub mexec $CHTab=AdvOpts
+Options_Button_02,Basic,/ub mexec $CHTab=Main
+Options_Button_03,Go to Home,/ub mexec $CHTab=Home
+Options_Button_04,Nav On,/ub mexec $ch_cmd_issue=`#optset enablenav true`
+Options_Button_05,Nav Off,/ub mexec $ch_cmd_issue=`#optset enablenav false`
+Options_Button_06,Nav Only,/ub mexec $ch_cmd_issue=`#action nav only`
+Options_Button_07,Combat,/ub mexec $CHTab=Combat
+Options_Button_08,Combat On,/ub mexec $ch_cmd_issue=`#optset enablecombat true`
+Options_Button_09,Combat Off,/ub mexec $ch_cmd_issue=`#optset enablecombat false`
+Options_Button_10,Summon On,/ub mexec $ch_cmd_issue=`#optset summonpets true`
+Options_Button_11,Summon Off,/ub mexec $ch_cmd_issue=`#optset summonpets false`
+Options_Button_12,Buff On,/ub mexec $ch_cmd_issue=`#optset enablebuffing true`
+Options_Button_13,Buff Off,/ub mexec $ch_cmd_issue=`#optset enablebuffing false`
+Options_Button_14,Fastcast On,/ub mexec $ch_cmd_issue=`#optset fastcastbuffs true`
+Options_Button_15,Fastcast Off,/ub mexec $ch_cmd_issue=`#optset fastcastbuffs false`
+Options_Button_16,Loot On,/ub mexec $ch_cmd_issue=`#optset enablelooting true`
+Options_Button_17,Loot Off,/ub mexec $ch_cmd_issue=`#optset enablelooting false`
+Options_Button_18,Loot All,/ub mexec $ch_cmd_issue=`#action loot all`
+Options_Button_19,Rares Only,/ub mexec $ch_cmd_issue=`#action rares only`
+Options_Button_20,Loot Boost On,/ub mexec $ch_cmd_issue=`#optset lootpriorityboost true`
+Options_Button_21,Loot Boost Off,/ub mexec $ch_cmd_issue=`#optset lootpriorityboost false`
+Options_Button_22,Doors On,/ub mexec $ch_cmd_issue=`#optset opendoors true`
+Options_Button_23,Doors Off,/ub mexec $ch_cmd_issue=`#optset opendoors false`
+Options_Button_24,Autostack On,/ub mexec $ch_cmd_issue=`#optset autostack true`
+Options_Button_25,Autostack Off,/ub mexec $ch_cmd_issue=`#optset autostack false`
+Options_Button_26,Autocram On,/ub mexec $ch_cmd_issue=`#optset autocram true`
+Options_Button_27,Autocram Off,/ub mexec $ch_cmd_issue=`#optset autocram false`
+Options_Button_28,Nav Boost On,/ub mexec $ch_cmd_issue=`#optset navpriorityboost true`
+Options_Button_29,Nav Boost Off,/ub mexec $ch_cmd_issue=`#optset navpriorityboost false`
+Options_Button_30,Corners On,/ub mexec $ch_cmd_issue=`#optset followaroundcorners true`
+Options_Button_31,Corners Off,/ub mexec $ch_cmd_issue=`#optset followaroundcorners false`
+Options_Button_32,NOTSET,#Command
+Options_Button_33,NOTSET,#Command
+Options_Button_34,Jiggle On,/ub mexec $ch_cmd_issue=`#optset dojiggle true`
+Options_Button_35,Jiggle Off,/ub mexec $ch_cmd_issue=`#optset dojiggle false`
+Options_Button_36,Peace When Idle On,/ub mexec $ch_cmd_issue=`#optset idlepeacemode true`
+Options_Button_37,Peace When Idle Off,/ub mexec $ch_cmd_issue=`#optset idlepeacemode false`
+AdvOptions_Button_01,Go to Basic Options,/ub mexec $CHTab=Opts
+AdvOptions_Button_02,Go to Home,/ub mexec $CHTab=Home
+AdvOptions_Button_03,Cast Dispel On,/ub mexec $ch_cmd_issue=`#optset castdispelself true`
+AdvOptions_Button_04,Cast Dispel Off,/ub mexec $ch_cmd_issue=`#optset castdispelself false`
+AdvOptions_Button_05,Use Dispel Items On,/ub mexec $ch_cmd_issue=`#optset usedispelitems true`
+AdvOptions_Button_06,Use Dispel Items Off,/ub mexec $ch_cmd_issue=`#optset usedispelitems false`
+AdvOptions_Button_07,Target Lock On,/ub mexec $ch_cmd_issue=`#optset targetlock true`
+AdvOptions_Button_08,Target Lock Off,/ub mexec $ch_cmd_issue=`#optset targetlock false`
+AdvOptions_Button_09.Idle Rebuff On,/ub mexec $ch_cmd_issue=`#optset idlebufftopoff true`
+AdvOptions_Button_10,Idle Rebuff Off,/ub mexec $ch_cmd_issue=`#optset idlebufftopoff false`
+AdvOptions_Button_11,Don't Shoot Walls,/ub mexec $ch_cmd_issue=`#optset useprojectileawareness true`
+AdvOptions_Button_12,Allow Shoot Walls,/ub mexec $ch_cmd_issue=`#optset useprojectileawareness false`
+AdvOptions_Button_13,NOTSET,#Command
+AdvOptions_Button_14,NOTSET,#Command
+AdvOptions_Button_15,NOTSET,#Command
+AdvOptions_Button_16,NOTSET,#Command
+AdvOptions_Button_17,Save Movement Options,/ub mexec $ch_cmd_issue=`#saveopts saved`
+AdvOptions_Button_18,Save Combat Options,/ub mexec $ch_cmd_issue=`#savecombatopts saved`
+AdvOptions_Button_19,Restore Movement Options,/ub mexec $ch_cmd_issue=`#loadopts saved`
+AdvOptions_Button_20,Restore Combat Options,/ub mexec $ch_cmd_issue=`#loadcombatopts saved`

@@ -1,0 +1,22 @@
+Tabs: Home, Main, Move, Combat, Items, NPC, Opts, Adv Opts, Rngs, Jump, Recalls('Nav'?), Actions, Quests
+
+Tab #1: Home
+Tab #2: Main
+Tab #3: Move[ment]
+Tab #4: Combat
+Tab #5: Items
+Tab #6: NPC
+Tab #7: Actions
+Tab #8: Quests
+Tab #9: Jump
+Tab #11: Opts
+Tab #12: Adv Opts
+Tab #13: Rngs
+Tab #14: Recalls ('Nav'?)
+
+
+TODO:
+Add handling for CH-driven vars:
+- $ch_cmd_issue => issue command to group
+- $ch_cmd_build => use Command Builder / auto-capture params
+- $ch_cmd_self => issue command by 'think'ing to self
