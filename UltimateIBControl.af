@@ -39,8 +39,10 @@
 
 STATE: {Default} ~~ {
 	IF:	Always
-		DO:	Chat {/ub opt set VTank.PatchExpressionEngine true}
-	IF:	ChatMatch { %% Version 0.1.0 Ultimate %%}
+		DO:	DoAll
+				DoExpr {clearallvars[]}
+				Chat {/ub opt set VTank.PatchExpressionEngine true}
+	IF:	ChatMatch { %% Version 0.9.0 Ultimate %%}
 		DO:	None
 	IF:	ChatMatch {          %% OPTIONS %%}
 		DO:	None
@@ -49,11 +51,13 @@ STATE: {Default} ~~ {
 	IF:	Always
 		DO:	DoExpr {@IBControlMetaName=`UltimateIBControl`}
 	IF: Always
+		DO: DoExpr {@ChaosHelperProfileName=`Unlimited_IBControl_config.txt`}
+	IF: Never
+		DO: Chat {%% SET TO A NUMBER 1 THRU 3 TO GET MORE LOGGING %%}
+	IF: Always
+		DO: DoExpr {@DebugLevel=1}
+	IF: Always
 		DO: DoExpr {$OrigCharlist=$charlist}
-	IF:	ChatMatch { %% CHANGE TO 1 TO DEFINE CHARS IN MET FILE %%}
-		DO:	None
-	IF:	Always
-		DO:	DoExpr {setgvar[InlineCharlist,0]}
 	IF:	ChatMatch { %% CHARACTER NAME LIST IF INLINED %%}
 		DO:	None
 	IF:	Always
@@ -86,13 +90,15 @@ STATE: {Default} ~~ {
 		DO:	DoExpr {setgvar[charlist,listcreate[]]}
 	IF:	Expr {$ch==true}
 		DO:	DoAll
-				Chat {/ch setprofile Unlimited_IBControl_config.txt}
+				DoExpr {chatbox[`/ch setprofile `+@ChaosHelperProfileName]}
 				Chat {/ch setchatcommand /s}
 				Chat {/ch settab 1}
 				DoExpr {@ch=false}
 	IF:	Expr {getvar[view]==true}
 		DO:	DoAll
 				DoExpr {@view=false}
+	IF: Always
+		DO: DoExpr {@sendraremessage=true}
 	IF:	Always
 		DO:	DoExpr {@senddeathmessage=true}
 	IF:	Always
@@ -133,17 +139,39 @@ STATE: {Default} ~~ {
 		DO:	DoExpr {@lootprofile=PROFILENAME}
 	IF:	Never
 		DO:	DoExpr {@vwtprofile=PROFILENAME}
-	IF:	Expr {getgvar[InlineCharlist]==0}
+	IF: Never
+		DO: Chat {Quest Name mentioned below is full text coming after #quest w/no abbrev} 
+	IF: Never
+		DO: Chat {Landblocks must be enclosed in backticks!!}
+	~~ optional dict mapping Quest Name -> Char-specific VT profile name
+	IF: Always
+		DO: DoExpr {@QuestCharProfiles=dictcreate[]}
+	~~ optional dict mapping Quest Name -> Shared VT profile name
+	IF: Always
+		DO: DoExpr {@QuestSharedProfiles=dictcreate[]}
+	IF: Never
+		DO: DoAll
+				DoExpr {dictadditem[@QuestSharedProfiles,`Hoshino Killtasks`,`HoshProf`]}
+	~~ optional dict mapping Landblock -> Char-specific VT profile name
+	IF: Always
+		DO: DoExpr {@LandblockCharProfiles=dictcreate[]}
+	~~ optional dict mapping Landblock -> Shared VT profile name
+	IF: Always
+		DO: DoExpr {@LandblockSharedProfiles=dictcreate[]}
+	IF: Never
+		DO: DoAll
+				DoExpr {dictadditem[@LandblockSharedProfiles,`F5590000`,`F559prof`]}
+	~~ check if we need to run command-based char list building
+	IF:	Expr {listcount[$charlist]==0}
 		DO:	SetState {Configure}
+	~~ if we already configured things in this met file in the $charlist, then use that
 	IF:	Always
 		DO:	DoAll
 				DoExpr {@charlist=$charlist}
 				SetState {Ready}
 ~~ }
 STATE: {Configure} ~~ {
-	IF:	All
-			Expr {getgvar[CharlistConfigured]==0}
-			Expr {getgvar[InlineCharlist]==0}
+	IF:	Expr {getgvar[CharlistConfigured]==0}
 		DO:	DoAll
 				DoExpr {echo[`Use #addchar CHARNAME to register another character`,3]}
 				DoExpr {echo[`Use #listchars to list out registered party members`,3]}
@@ -152,7 +180,6 @@ STATE: {Configure} ~~ {
 	IF:	All
 			ChatCapture {(^(\[[A-z]+?\] |)You|.*\<Tell:IIDString:.+:(?<name>[^\<]*)\>.+\<\\Tell\>) (?<saythink>.*), \"#importchars\"$} {}
 			Expr {getgvar[CharlistConfigured]==0}
-			Expr {getgvar[InlineCharlist]==0}
 			Expr {testvar[occ]&&listcount[$occ]>0}
 			Any
 				Expr {getvar[capturegroup_saythink]==think}
@@ -168,7 +195,6 @@ STATE: {Configure} ~~ {
 	IF:	All
 			ChatCapture {(^(\[[A-z]+?\] |)You|.*\<Tell:IIDString:.+:(?<name>[^\<]*)\>.+\<\\Tell\>) (?<saythink>.*), \"#finished\"$} {}
 			Expr {getgvar[CharlistConfigured]==0}
-			Expr {getgvar[InlineCharlist]==0}
 			Any
 				Expr {getvar[capturegroup_saythink]==think}
 				Expr {getvar[capturegroup_saythink]==say}
@@ -181,7 +207,6 @@ STATE: {Configure} ~~ {
 	IF:	All
 			ChatCapture {(^(\[[A-z]+?\] |)You|.*\<Tell:IIDString:.+:(?<name>[^\<]*)\>.+\<\\Tell\>) (?<saythink>.*), \"#addchar (?<charname>.*)\"$} {}
 			Expr {getgvar[CharlistConfigured]==0}
-			Expr {getgvar[InlineCharlist]==0}
 			Expr {listcontains[getgvar[charlist],$capturegroup_charname]==0}
 			Any
 				Expr {$capturegroup_saythink==think}
@@ -196,7 +221,6 @@ STATE: {Configure} ~~ {
 	IF:	All
 			ChatCapture {(^(\[[A-z]+?\] |)You|.*\<Tell:IIDString:.+:(?<name>[^\<]*)\>.+\<\\Tell\>) (?<saythink>.*), \"#listchars\"$} {}
 			Expr {getgvar[CharlistConfigured]==0}
-			Expr {getgvar[InlineCharlist]==0}
 			Any
 				Expr {$capturegroup_saythink==think}
 				Expr {$capturegroup_saythink==say}
@@ -205,10 +229,9 @@ STATE: {Configure} ~~ {
 				DoExpr {setvar[inform_name,iif[$capturegroup_saythink==`think`||$capturegroup_saythink==`say`,getcharstringprop[1],getvar[capturegroup_name]]]}
 				DoExpr {chatbox[`/w `+$inform_name+`, Characters: `+tostring[getgvar[charlist]]]}
 				SetState {Configure}
-	IF:	All
-			Expr {getgvar[InlineCharlist]==0}
-			Expr {getgvar[CharlistConfigured]==1}
+	IF:	Expr {getgvar[CharlistConfigured]==1}
 		DO:	DoAll
+				DoExpr {chatbox[`/w `+getcharstringprop[1]+`, Configured party with `+cstr[listcount[$charlist]]+` characters.`]}
 				DoExpr {@charlist=getgvar[charlist]}
 				SetState {Ready}
 ~~ }

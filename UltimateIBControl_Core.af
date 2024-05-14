@@ -44,12 +44,15 @@ STATE: {Terminated} ~~ {
 		DO: DoExpr {echo[$error,6]}	
 ~~ }
 
-STATE: {*** Edit Here ***} ~~ {
-	IF:	ChatMatch {    %% Version 0.9.5 Ultimate %%}
+STATE: {Init} ~~ {
+	IF:	ChatMatch {    %% Version 0.9.9 Ultimate %%}
 		DO:	None
 	~~ FIXME UNSET BEFORE RELEASE
 	IF: Always
-		DO: DoExpr {$Debug=0}
+		DO: DoExpr {$DefaultDebug=1}
+	~~ carry over from config meta, if it's set
+	IF: Always
+		DO: DoExpr {$Debug=iif[testpvar[DebugLevel],@DebugLevel,$DefaultDebug]; clearpvar[DebugLevel]}
 	IF:	All
 			Expr {@loaded!=1}
 			Expr {testpvar[IBControlMetaName]==0}
@@ -77,6 +80,8 @@ STATE: {*** Edit Here ***} ~~ {
 				DoExpr {$SummonSecondarySpellId=2648}
 	IF: Always
 		DO: DoExpr {$ChaosHelperProfileName=iif[testpvar[ChaosHelperProfileName],@ChaosHelperProfileName,`Unlimited_IBControl_config.txt`]}
+	IF: Always
+		DO: DoExpr {$sendraremessage=iif[testpvar[sendraremessage],@sendraremessage,false]; clearpvar[sendraremessage]}
 	IF: Always
 		DO: DoExpr {$senddeathmessage=iif[testpvar[senddeathmessage],@senddeathmessage,true]; clearpvar[senddeathmessage]}
 	IF: Always
@@ -109,13 +114,38 @@ STATE: {*** Edit Here ***} ~~ {
 	IF:	Expr {@loadui==1}
 		DO:	Chat {/loadui}
 	IF:	Expr {testpvar[charsettingsprofile]==1}
-		DO: DoExpr {chatbox[`/vt settings loadchar `+@charsettingsprofile]; clearpvar[charsettingsprofile]}
+		DO: DoAll
+				DoExpr {$Debug>=1&&echo[`Loading character settings profile from config meta: `+@charsettingsprofile,$DebugColor]}
+				DoExpr {chatbox[`/vt settings loadchar `+@charsettingsprofile]}
+				DoExpr {$CurrentVTProfile=@charsettingsprofile}
+				DoExpr {$CurrentVTProfileIsShared=0}
+				DoExpr {clearpvar[charsettingsprofile]}
 	IF:	Expr {testpvar[settingsprofile]==1}
-		DO: DoExpr {chatbox[`/vt settings load `+@settingsprofile]; clearpvar[settingsprofile]}
+		DO: DoAll
+				DoExpr {$Debug>=1&&echo[`Loading shared settings profile from config meta: `+@settingsprofile,$DebugColor]}
+				DoExpr {chatbox[`/vt settings load `+@settingsprofile]}
+				DoExpr {$CurrentVTProfile=@settingsprofile}
+				DoExpr {$CurrentVTProfileIsShared=1}
+				DoExpr {clearpvar[settingsprofile]}
 	IF: Expr {testpvar[lootprofile]==1}
-		DO: DoExpr {chatbox[`/vt loot load `+@lootprofile]; clearpvar[lootprofile]}
+		DO: DoAll
+				DoExpr {$Debug>=1&&echo[`Loading loot profile from config meta: `+@lootprofile,$DebugColor]}
+				DoExpr {chatbox[`/vt loot load `+@lootprofile]; clearpvar[lootprofile]}
 	IF: Expr {testpvar[vwtprofile]==1}
-		DO: DoExpr {chatbox[`/vwt apply `+@vwtprofile]; clearpvar[vwtprofile]}
+		DO: DoAll
+				DoExpr {$Debug>=1&&echo[`Loading Virindi Window Tool profile from config meta: `+@vwtprofile,$DebugColor]}
+				DoExpr {chatbox[`/vwt apply `+@vwtprofile]; clearpvar[vwtprofile]}
+	IF: Always
+		DO: DoAll
+				DoExpr {$QuestCharProfiles=iif[testpvar[QuestCharProfiles],@QuestCharProfiles,dictcreate[]]; clearpvar[QuestCharProfiles]}
+				DoExpr {$QuestSharedProfiles=iif[testpvar[QuestSharedProfiles],@QuestSharedProfiles,dictcreate[]]; clearpvar[QuestSharedProfiles]}
+				DoExpr {$LandblockCharProfiles=iif[testpvar[LandblockCharProfiles],@LandblockCharProfiles,dictcreate[]]; clearpvar[LandblockCharProfiles]}
+				DoExpr {$LandblockSharedProfiles=iif[testpvar[LandblockSharedProfiles],@LandblockSharedProfiles,dictcreate[]]; clearpvar[LandblockSharedProfiles]}
+	~~ make sure we didn't set this already above
+	IF: Expr {0==testvar[CurrentVTProfile]}
+		DO: DoAll
+				DoExpr {$CurrentVTProfile=``}
+				DoExpr {$CurrentVTProfileIsShared=1}
 	IF:	ChatMatch {       %% CHARACTERS %%}
 		DO:	None
 	IF:	All
@@ -246,15 +276,21 @@ STATE: {ListCommandParams} ~~ {
 ~~ }
 
 STATE: {UpdateView} ~~ {
-	IF:	Expr {@IBCRemoteMode==chaoshelper}
+	IF: All
+			Expr {@IBCRemoteMode!=miniremote}
+			Expr {@IBCRemoteMode!=both}
+		DO: DestroyAllViews
+
+	IF:	Any
+			Expr {@IBCRemoteMode==chaoshelper}
+			Expr {@IBCRemoteMode==both}
 		DO:	DoAll
-				DestroyAllViews
 				DoExpr {$view=true}
 				DoExpr {testvar[ChaosHelperCurrentProfile]==0&&$ChaosHelperCurrentProfile=$ChaosHelperProfileName&&chatbox[`/ch setprofile `+$ChaosHelperCurrentProfile]}
 				DoExpr {chatbox[`/ch setchatcommand `+iif[testpvar[CommandChatPrefix],`/`+@CommandChatPrefix,`/s`]]}
 				DoExpr {$ChaosHelperCurrentTab=1}
 				Chat {/ub delay 1000 /ch settab 1}
-				DoExpr {echo[`Using ChaosHelper in lieu of MiniRemote. Use #miniremote to switch back to use of the MiniRemote instead`,3]}
+				DoExpr {echo[`Using ChaosHelper. Use #miniremote or #bothremotes to switch back to use of the MiniRemote instead`,3]}
 	IF: All
 			Expr {@IBCRemoteMode!=chaoshelper}
 			Expr {testpvar[CommandChatPrefix]==0||@CommandChatPrefix==f}
@@ -268,7 +304,7 @@ STATE: {UpdateView} ~~ {
 		DO: DoAll
 				DestroyView {IBC Remote}
 				CreateView {IBC Remote} {<?xml version="1.0"?><view width="168" height="217" title="IBC Remote"><control type="layout"><control type="button" name="All On" left="6" top="6" width="75" height="15" text="All On" setstate="Default2" actionexpr="chatbox[\/s \#action all on]" /><control type="button" name="All Off" left="87" top="6" width="75" height="15" text="All Off" setstate="Default2" actionexpr="chatbox[\/s \#action all off]" /><control type="button" name="Follow" left="6" top="27" width="75" height="15" text="Follow" setstate="Default2" actionexpr="chatbox[\/s \#action follow]" /><control type="button" name="Stay" left="87" top="27" width="75" height="15" text="Stay" setstate="Default2" actionexpr="chatbox[\/s \#action stay]" /> <control type="button" name="Nav Only" left="87" top="48" width="75" height="15" text="Nav Only" setstate="Default2" actionexpr="chatbox[\/s \#action nav only]" /><control type="button" name="Forcebuff" left="6" top="48" width="75" height="15" text="Forcebuff" setstate="Default2" actionexpr="chatbox[\/s \#action buff]" /><control type="button" name="Combat On" left="6" top="69" width="75" height="15" text="Combat On" setstate="Default2" actionexpr="chatbox[\/s \#optset enablecombat true]" /><control type="button" name="Combat Off" left="87" top="69" width="75" height="15" text="Combat Off" setstate="Default2" actionexpr="chatbox[\/s \#optset enablecombat false]" /><control type="button" name="Nav Off" left="87" top="90" width="75" height="15" text="Nav Off" setstate="Default2" actionexpr="chatbox[\/s \#optset enablenav false]" /><control type="button" name="Nav On" left="6" top="90" width="75" height="15" text="Nav On" setstate="Default2" actionexpr="chatbox[\/s \#optset enablenav true]" /><control type="button" name="Rares Only" left="87" top="111" width="75" height="15" text="Rares Only" setstate="Default2" actionexpr="chatbox[\/s \#action rares only]" /><control type="button" name="Loot All" left="6" top="111" width="75" height="15" text="Loot All" setstate="Default2" actionexpr="chatbox[\/s \#action loot all]" /><control type="button" name="Buff On" left="6" top="132" width="75" height="15" text="Buff On" setstate="Default2" actionexpr="chatbox[\/s \#optset enablebuffing true]" /><control type="button" name="Buff Off" left="87" top="132" width="75" height="15" text="Buff Off" setstate="Default2" actionexpr="chatbox[\/s \#optset enablebuffing false]" /><control type="button" name="Portal" left="6" top="174" width="75" height="15" text="Portal" setstate="Default2" actionexpr="chatbox[\/s \#action ucp]" /><control type="button" name="NPC" left="87" top="174" width="75" height="15" text="NPC" setstate="Default2" actionexpr="chatbox[\/s \#action npc]" /><control type="button" name="Vendor" left="6" top="195" width="75" height="15" text="Vendor" setstate="Default2" actionexpr="chatbox[\/s \#action ucv]" /></control></view>}
-				DoExpr {echo[`Using IBControl MiniRemote. Use #chaoshelper to switch over to exclusive use of the ChaosHelper controls and always hide the MiniRemote`,3]}
+				DoExpr {echo[`Using IBControl MiniRemote. Use #chaoshelper or #bothremotes to switch over to exclusive use of the ChaosHelper controls and always hide the MiniRemote`,3]}
 	IF: Always
 		DO: Return
 ~~ }
@@ -544,7 +580,7 @@ STATE: {Default} ~~ {
 				DoExpr {$ch=true}
 				DoExpr {$view=true}
 				DoExpr {$capturegroup_actiontext=none}
-				SetState {*** Edit Here ***}
+				SetState {Init}
 ~~ }
 		
 ~~~~~~~~~~~
@@ -916,12 +952,42 @@ STATE: {Default2} ~~ {
 		DO: DoAll
 				DoExpr {clearvar[ch_prof]; clearvar[ch_tab]}
 				SetState {Default2}
-	
-	~~ Check for whether we want to handle the Default2 state command as if they were typed in / chat-handled, but in fact are built programatically (above)
-	IF: All
-			Expr {$ch_cmd_process}
-			Expr {}
 
+	~~ Check for special chat messages that should be handled differently than commands
+	IF: All
+			Expr {$sendraremessage}
+			ChatCapture {(?<name>.*)\ has\ discovered\ the (?<rare>.*)\!} {5}
+			Expr {$capturegroup_name==getcharstringprop[1]}
+		DO: DoAll
+				DoExpr {chatbox[`/w `+getcharstringprop[1]+`, Found rare: `+$capturegroup_rare]}
+				DoExpr {clearvar[capturegroup_name]; clearvar[capturegroup_rare]}
+				SetState {Default2}
+
+	~~ Check to see if we have a landblock-mapped VT Profile to load and it is not already loaded
+	IF: All
+			Expr {dictsize[$LandblockSharedProfiles]>0}
+			Expr {dicthaskey[$LandblockSharedProfiles,cstrf[getplayerlandblock[],X8]]}
+			Any
+				Expr {$CurrentVTProfileIsShared==0}
+				Expr {$CurrentVTProfile!=dictgetitem[$LandblockSharedProfiles,cstrf[getplayerlandblock[],X8]]}
+		DO: DoAll
+				DoExpr {$CurrentVTProfile=dictgetitem[$LandblockSharedProfiles,cstrf[getplayerlandblock[],X8]]}
+				DoExpr {$CurrentVTProfileIsShared=1}
+				DoExpr {$Debug>=1&&echo[`Loading shared VT Profile for landblock: `+cstrf[getplayerlandblock[],X8] + `: `+$CurrentVTProfile,$InfoColor]}
+				DoExpr {chatbox[`/vt settings load `+$CurrentVTProfile]}
+				SetState {Default2}
+	IF: All
+			Expr {dictsize[$LandblockCharProfiles]>0}
+			Expr {dicthaskey[$LandblockCharProfiles,cstrf[getplayerlandblock[],X8]]}
+			Any
+				Expr {$CurrentVTProfileIsShared==1}
+				Expr {$CurrentVTProfile!=dictgetitem[$LandblockCharProfiles,cstrf[getplayerlandblock[],X8]]}
+		DO: DoAll
+				DoExpr {$CurrentVTProfile=dictgetitem[$LandblockCharProfiles,cstrf[getplayerlandblock[],X8]]}
+				DoExpr {$CurrentVTProfileIsShared=0}
+				DoExpr {$Debug>=1&&echo[`Loading char-specific VT Profile for landblock: `+cstrf[getplayerlandblock[],X8] + `: `+$CurrentVTProfile,$InfoColor]}
+				DoExpr {chatbox[`/vt settings loadchar `+$CurrentVTProfile]}
+				SetState {Default2}
 
 	~~ Check for commands and optional arguments
 	IF: All
@@ -1104,6 +1170,15 @@ STATE: {Default2} ~~ {
 				CallState {UpdateView} {Default2}
 	~~ }
 
+	~~ #bothremotes {
+	IF: All
+			Expr {bothremotes==$CommandIssued}
+			Expr {0==$CommandHasArgs}
+		DO: DoAll
+				DoExpr {@IBCRemoteMode=both}
+				CallState {UpdateView} {Default2}
+	~~ }
+
 	~~ #chaoshelper {
 	IF: All
 			Expr {chaoshelper==$CommandIssued}
@@ -1202,14 +1277,46 @@ STATE: {Default2} ~~ {
 				DoExpr {chatbox[`/w `+$CommandIssuer+`, I do not have any `+$CommandArgs+` (partial match)`]}
 	~~ }
 
+	~~ #vtcharprofile PROFILENAME {
+	IF: All
+			Expr {vtcharprofile==$CommandIssued}
+			Expr {1==$CommandHasArgs}
+			Expr {$CurrentVTProfile==$CommandArgs}
+			Expr {$CurrentVTProfileIsShared==0}
+		DO: DoAll
+				DoExpr {echo[`Char-specific VT Profile was already loaded: `+$CommandArgs,$InfoColor]}
+	IF: All
+			Expr {vtcharprofile==$CommandIssued}
+			Expr {1==$CommandHasArgs}
+			Any
+				Expr {$CurrentVTProfile!=$CommandArgs}
+				Expr {$CurrentVTProfileIsShared==1}
+		DO: DoAll
+				DoExpr {echo[`Loading char-specific VTank profile: `+$CommandArgs,$InfoColor]}
+				DoExpr {chatbox[`/vt settings loadchar `+$CommandArgs]}
+				DoExpr {$CurrentVTProfile=$CommandArgs}
+				DoExpr {$CurrentVTProfileIsShared=0}
+	~~ }
+
 	~~ #vtprofile PROFILENAME {
 	IF: All
 			Expr {vtprofile==$CommandIssued}
 			Expr {1==$CommandHasArgs}
+			Expr {$CurrentVTProfile==$CommandArgs}
+			Expr {$CurrentVTProfileIsShared==1}
 		DO: DoAll
-				DoExpr {$itemname=getregexmatch[$CommandArgs,`[0-9]+ (.*)$`]}
-				DoExpr {echo[`Loading VTank profile: `+$CommandArgs,$InfoColor]}
-				DoExpr {chatbox[`/vt settings loadchar `+$CommandArgs]}
+				DoExpr {echo[`Shared VT Profile was already loaded: `+$CommandArgs,$InfoColor]}
+	IF: All
+			Expr {vtprofile==$CommandIssued}
+			Expr {1==$CommandHasArgs}
+			Any
+				Expr {$CurrentVTProfile!=$CommandArgs}
+				Expr {$CurrentVTProfileIsShared==0}
+		DO: DoAll
+				DoExpr {echo[`Loading shared VTank profile: `+$CommandArgs,$InfoColor]}
+				DoExpr {chatbox[`/vt settings load `+$CommandArgs]}
+				DoExpr {$CurrentVTProfile=$CommandArgs}
+				DoExpr {$CurrentVTProfileIsShared=1}
 	~~ }
 
 	~~ #addchar CHARNAME {
@@ -1595,12 +1702,12 @@ STATE: {Default2} ~~ {
 		DO: DoAll
 				DoExpr {chatbox[`/w `+$CommandArgs+`, #cometo `+coordinatetostring[getplayercoordinates[]]]}
 	~~ }
-	~~ TODO: wtf is this? /ub follow another char?
 	~~ #chase NAME {
 	IF: All
 			Expr {chase==$CommandIssued}
 			Expr {1==$CommandHasArgs}
 		DO: DoAll
+				DoExpr {$target=$CommandArgs}
 				SetState {Chase}
 	~~ }
 	~~ TODO wtf is this??
@@ -2423,14 +2530,7 @@ STATE: {Action} ~~ {
 		DO:	SetState {Default2}
 	IF: All
 			Expr {(fellow)#$capturegroup_actiontext}
-			Expr {$createfellow}
-		DO: DoAll
-				ChatExpr {\/ub fellow create +$fellowname}
-	IF:	Expr {(fellow)#$capturegroup_actiontext}
-		DO:	DoAll
-				DoExpr {$counter=0}
-				DoExpr {$invitelist=listmap[listfilter[wobjectfindallbyobjectclass[24],`listcontains[$charlist,wobjectgetname[$1]]`],`wobjectgetname[$1]`]]}
-				SetState {Fellow}
+		DO: CallState {CaptureOptions} {Fellow Create}
 	IF:	Not Expr {$capturegroup_actiontext#`AutoReadContracts|AutoCraft|disband|buff|rares only|Backpack Open|npc|ucp|fpo|select|afk|cry|joy|dance|kneel|laugh|wave|lie|point|sit|stand|stay|recomp|follow|Face East|Face West|Face North|Face South|Face Southeast|Face Southwest|Face Northeast|Face Northwest|fellow|ucv|All On|All Off|loot all|nav only|tap jump|sum\d+(a|b)`}
 		DO:	SetState {Default2}
 	IF:	All
@@ -2455,9 +2555,13 @@ STATE: {Action} ~~ {
 ~~ }
 STATE: {Chase} ~~ {
 	IF:	All
+			Expr {testvar[target]}
+			Expr {strlen[$target]>0}
 			Expr {$target!=getcharstringprop[1]}
-		DO:	DoAll
-				ChatExpr {\/ub follow +$target}
+		DO:	ChatExpr {\/ub follow +$target}
+	IF: Always
+		DO: DoAll
+				DoExpr {clearvar[target]}
 				SetState {Default2}
 ~~ }
 STATE: {CheckFlag} ~~ {
@@ -2702,39 +2806,45 @@ STATE: {Extension} ~~ {
 		DO:	DoAll
 				SetState {Default2}
 ~~ }
-STATE: {Fellow} ~~ {
-	IF: All
-			Expr {getcombatstate[]==peace}
-			Expr {Mage==$charclass}
-		DO: DoExpr {setcombatstate[magic]}
-	IF: All
-			Expr {getcombatstate[]==peace}
-			Expr {Missile==$charclass}
-		DO: DoExpr {setcombatstate[missile]}
-	IF: All
-			Expr {getcombatstate[]==peace}
-			Expr {Melee==$charclass}
-		DO: DoExpr {setcombatstate[melee]}
-	IF: PSecsInStateGE 15
-		DO: DoExpr {$timedout=1}
+
+STATE: {Fellow Create} ~~ {
+	IF:	Always
+		DO:	ChatExpr {`/ub fellow create `+$fellowname}
+	IF:	Expr {getfellowshipstatus[]==1}
+		DO:	SetState {Fellow Invite}
+	IF:	SecsInStateGE 1
+		DO:	SetState {Fellow Create}
+~~ }
+
+STATE: {Fellow Invite} ~~ {
+	IF: Not Expr {testvar[counter]}
+		DO: DoAll
+				DoExpr {chatbox[`/w `+getcharstringprop[1]+`, I am entering combat stance to bypass the fellowship recruitment animation.`]}
+				SetOpt {IdlePeaceMode} {false}
+				Chat {/mt combatstate magic}
+				Chat {/mt combatstate melee}
+				Chat {/mt combatstate missile}
+				ChatExpr {\/ub fellow create +$fellowname}
+				DoExpr {$counter=0}
+	IF: Always
+		DO: DoExpr {$charname=listgetitem[$charlist,$counter]}
+	IF:	Expr {wobjectfindnearestbynameandobjectclass[24,`^`+$charname+`$`]!=0}
+		DO:	ChatExpr {`/ub fellow recruit `+$charname}
 	IF:	Any
-			Expr {$timedout}
-			All
-				Expr {getcombatstate[]!=peace}
-				SecsInStateGE 1
+			ChatMatch {^.+ is now a member of your Fellowship.$}
+			Expr {wobjectfindnearestbynameandobjectclass[24,`^`+$charname+`$`]==0}
+			SecsInStateGE 1
 		DO:	DoAll
-				DoExpr {$timedout&&echo[`Unexpectedly spent more than 15 seconds trying to invite a character to fellow!`,$ErrorColor]}
-				ChatExpr {\/ub fellow recruit +listgetitem[$invitelist,$counter]}
 				DoExpr {$counter=$counter+1}
-				DoExpr {clearvar[timedout]}
-				SetState {Fellow}
+				SetState {Fellow Invite}
 	IF:	Any
-			Expr {$counter>=listcount[$invitelist]}
-			Expr {getfellowshipisfull[]}
+			Expr {getfellowshipcanrecruit[]==0}
+			Expr {$counter>=listcount[$charlist]}
 		DO:	DoAll
-				DoExpr {clearvar[invitelist]}
-				DoExpr {clearvar[counter]; clearvar[timedout]}
-				SetState {Default2}
+				DoExpr {chatbox[`/w `+getcharstringprop[1]+`, Fellowship is now full.`]}
+				DoExpr {clearvar[capturegroup_actiontext]}
+				DoExpr {clearvar[counter]; clearvar[charname]}
+				CallState {RestoreOptions} {Default2}
 ~~ }
 STATE: {Get Over Here} ~~ {
 	IF:	Always
@@ -4341,6 +4451,8 @@ STATE: {Quest} ~~ {
 				SetState {Default2}
 	IF: Always
 		DO: DoExpr {$Debug>=1&&echo[`Processing Quest Command: `+$capturegroup_questtext,$InfoColor]}
+	IF: Expr {(Neftet Killtasks)#$capturegroup_questtext}
+		DO:	DoExpr {$quest_name=`Neftet Killtasks`}
 	IF:	All
 			Expr {(Neftet Killtasks)#$capturegroup_questtext}
 		DO:	DoAll
@@ -4373,7 +4485,9 @@ STATE: {Quest} ~~ {
 				SetState {Default2}
 	IF:	All
 			Expr {(Frozen Valley Killtasks)#$capturegroup_questtext}
-		DO:	SetOpt {enablecombat} {false}
+		DO:	DoAll
+				SetOpt {enablecombat} {false}
+				DoExpr {$quest_name=`Frozen Valley Killtasks`}
 	IF:	All
 			Expr {(Frozen Valley Killtasks)#$capturegroup_questtext}
 		DO:	EmbedNav nav134 {to FN npcs.nav}
@@ -4421,6 +4535,8 @@ STATE: {Quest} ~~ {
 				DoExpr {clearvar[Killtasks]}
 				DoExpr {clearvar[capturegroup_questtext]}
 				CallState {RestoreOptions} {Default2}
+	IF: Expr {(Hoshino Killtasks)#$capturegroup_questtext}
+		DO:	DoExpr {$quest_name=`Hoshino Killtasks`}
 	IF:	All
 			Expr {(Hoshino Killtasks)#$capturegroup_questtext}
 		DO:	DoAll
@@ -4472,7 +4588,9 @@ STATE: {Quest} ~~ {
 				CallState {RestoreOptions} {Default2}
 	IF:	All
 			Expr {(Tou-Tou Killtasks)#$capturegroup_questtext}
-		DO:	EmbedNav nav153 {[none]}
+		DO:	DoAll
+				EmbedNav nav153 {[none]}
+				DoExpr {$quest_name=`Tou-Tou Killtasks`}
 	IF:	All
 			Expr {(Tou-Tou Killtasks)#$capturegroup_questtext}
 			CellE F559003D
@@ -4522,6 +4640,8 @@ STATE: {Quest} ~~ {
 				EmbedNav nav160 {empty.nav}
 				DoExpr {clearvar[capturegroup_questtext]}
 				CallState {RestoreOptions} {Default2}
+	IF: Expr {(Graveyard Killtasks)#$capturegroup_questtext}
+		DO:	DoExpr {$quest_name=`Graveyard Killtasks`}
 	IF:	All
 			Expr {(Graveyard Killtasks)#$capturegroup_questtext}
 		DO:	DoAll
@@ -4557,6 +4677,8 @@ STATE: {Quest} ~~ {
 				EmbedNav nav165 {[none]}
 				DoExpr {clearvar[capturegroup_questtext]}
 				CallState {RestoreOptions} {Default2}
+	IF: Expr {(Rynthid Killtasks)#$capturegroup_questtext}
+		DO:	DoExpr {$quest_name=`Rynthid Killtasks`}
 	IF:	All
 			Expr {(Rynthid Killtasks)#$capturegroup_questtext}
 			Expr {getisspellknown[6150]==1} ~~ SpellId 6150 is "Rynthid Recall".
@@ -4612,7 +4734,31 @@ STATE: {Quest} ~~ {
 		DO:	DoAll
 				EmbedNav nav177 {[none]}
 				DoExpr {clearvar[capturegroup_questtext]}
-				CallState {RestoreOptions} {Default2}
+				DoExpr {$done=1}
+	IF: All
+			Expr {$quest_name&&strlen[$quest_name]>0}
+			Expr {$done==1}
+			Expr {dicthaskey[$QuestSharedProfiles,$quest_name]}
+			Any
+				Expr {$CurrentVTProfileIsShared==0}
+				Expr {$CurrentVTProfile!=dictgetitem[$QuestSharedProfiles,$quest_name]}
+		DO: DoAll
+				DoExpr {$CurrentVTProfile=dictgetitem[$QuestSharedProfiles,$quest_name]}
+				DoExpr {$CurrentVTProfileIsShared=1}
+				DoExpr {$Debug>=1&&echo[`Loading shared VTank profile for quest '`+$quest_name+`': `+$CurrentVTProfile,$InfoColor]}
+				DoExpr {chatbox[`/vt settings load `+$CurrentVTProfile]}
+	IF: All
+			Expr {$quest_name&&strlen[$quest_name]>0}
+			Expr {dicthaskey[$QuestCharProfiles,$quest_name]}
+			Expr {$done==1}
+			Any
+				Expr {$CurrentVTProfileIsShared==1}
+				Expr {$CurrentVTProfile!=dictgetitem[$QuestCharProfiles,$quest_name]}
+		DO: DoAll
+				DoExpr {$CurrentVTProfile=dictgetitem[$QuestCharProfiles,$quest_name]}
+				DoExpr {$CurrentVTProfileIsShared=0}
+				DoExpr {$Debug>=1&&echo[`Loading char-specific VTank profile for quest '`+$quest_name+`': `+$CurrentVTProfile,$InfoColor]}
+				DoExpr {chatbox[`/vt settings loadchar `+$CurrentVTProfile]}
 	IF:	All
 			ChatCapture {(^(\[[A-z]+?\] |)You|.*\<Tell:IIDString:.+:(?<name>[^\<]*)\>.+\<\\Tell\>) (?<saythink>.*), \"#cancel\"$} {}
 			Any
@@ -4620,13 +4766,15 @@ STATE: {Quest} ~~ {
 				Expr {$capturegroup_saythink==say}
 				Expr {listcontains[$charlist,$capturegroup_name]}
 		DO:	DoAll
-				DoExpr {clearvar[capturegroup_questtext]}
+				DoExpr {$done=1}
+	IF: Expr {$done==1}
+		DO: DoAll
+				DoExpr {clearvar[done]; clearvar[quest_name]; clearvar[capturegroup_questtext]; clearvar[capturegroup_name]}
 				CallState {RestoreOptions} {Default2}
 	IF:	Not Expr {(Tou-Tou Killtasks\|Graveyard Killtasks\|Rynthid Killtasks\|Hoshino Killtasks\|Frozen Valley Killtasks\|Neftet Killtasks)#$capturegroup_questtext}
 		DO:	DoAll
 				DoExpr {$Debug>=3&&echo[`capturegroup_questtext before exit: `+$capturegroup_questtext,$InfoColor]}
 				DoExpr {clearvar[capturegroup_questtext]}
-				~~ DoExpr {clearvar[OrigOptions]}
 				CallState {RestoreOptions} {Default2}
 ~~ }
 STATE: {Share} ~~ {
@@ -4982,13 +5130,13 @@ STATE: {Use} ~~ {
 STATE: {CaptureOptions} ~~ {
 	IF: Always
 		DO: DoAll
-				DoExpr {$OrigOptions=dictcreate[EnableCombat,cstr[vtgetsetting[EnableCombat]],EnableNav,cstr[vtgetsetting[EnableNav]],EnableLooting,cstr[vtgetsetting[EnableLooting]],OpenDoors,cstr[vtgetsetting[OpenDoors]],EnableBuffing,cstr[vtgetsetting[EnableBuffing]],AttackDistance,cstr[vtgetsetting[AttackDistance]],ApproachDistance,cstr[vtgetsetting[ApproachDistance]],NavCloseStopRange,cstr[vtgetsetting[NavCloseStopRange]]]}
+				DoExpr {$OrigOptions=dictcreate[EnableCombat,cstr[vtgetsetting[EnableCombat]],EnableNav,cstr[vtgetsetting[EnableNav]],EnableLooting,cstr[vtgetsetting[EnableLooting]],OpenDoors,cstr[vtgetsetting[OpenDoors]],EnableBuffing,cstr[vtgetsetting[EnableBuffing]],AttackDistance,cstr[vtgetsetting[AttackDistance]],ApproachDistance,cstr[vtgetsetting[ApproachDistance]],NavCloseStopRange,cstr[vtgetsetting[NavCloseStopRange]],IdlePeaceMode,cstr[vtgetsetting[IdlePeaceMode]]]}
 				Return
 ~~ }
 
 STATE: {RestoreOptions} ~~ {
 	IF: Expr {testvar[OrigOptions]}
-		DO: DoExpr {vtsetsetting[EnableLooting,dictgetitem[$OrigOptions,EnableLooting]]&&vtsetsetting[EnableCombat,dictgetitem[$OrigOptions,EnableCombat]]&&vtsetsetting[EnableBuffing,dictgetitem[$OrigOptions,EnableBuffing]]&&vtsetsetting[OpenDoors,dictgetitem[$OrigOptions,OpenDoors]]&&vtsetsetting[AttackDistance,dictgetitem[$OrigOptions,AttackDistance]]&&vtsetsetting[ApproachDistance,dictgetitem[$OrigOptions,ApproachDistance]]&&vtsetsetting[NavCloseStopRange,dictgetitem[$OrigOptions,NavCloseStopRange]]}
+		DO: DoExpr {vtsetsetting[EnableLooting,dictgetitem[$OrigOptions,EnableLooting]]&&vtsetsetting[EnableCombat,dictgetitem[$OrigOptions,EnableCombat]]&&vtsetsetting[EnableBuffing,dictgetitem[$OrigOptions,EnableBuffing]]&&vtsetsetting[OpenDoors,dictgetitem[$OrigOptions,OpenDoors]]&&vtsetsetting[AttackDistance,dictgetitem[$OrigOptions,AttackDistance]]&&vtsetsetting[ApproachDistance,dictgetitem[$OrigOptions,ApproachDistance]]&&vtsetsetting[NavCloseStopRange,dictgetitem[$OrigOptions,NavCloseStopRange]]&&vtsetsetting[IdlePeaceMode,dictgetitem[$OrigOptions,IdlePeaceMode]]}
 	~~ TODO FIXME!!!
 	IF: All
 			Expr {testvar[OrigOptions]}
