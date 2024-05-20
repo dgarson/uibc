@@ -359,6 +359,7 @@ STATE: {Default} ~~ {
 				DoExpr {$param=dictcreate[name,`key`,description,`usable key for unlocking chest`,selectionAllowed,1,selectionValidationExpr,`wobjectgetobjectclass[wobjectgetselection[]]==37`]; dictadditem[$ParamTypes,$param{{name}},$param]; clearvar[param]}
 				DoExpr {$param=dictcreate[name,`container`,description,`container with items in it`,selectionAllowed,1,selectionRequired,1,selectionValidationExpr,`wobjectgetobjectclass[wobjectgetselection[]]==10`]; dictadditem[$ParamTypes,$param{{name}},$param]; clearvar[param]}
 				DoExpr {$param=dictcreate[name,`item`,description,`any item in your inventory`,selectionAllowed,1,selectionValidationExpr,`wobjectfindininventorybyname[wobjectgetname[wobjectgetselection[]]]!=0`]; dictadditem[$ParamTypes,$param{{name}},$param]; clearvar[param]}
+				DoExpr {$param=dictcreate[name,`wobject`,description,`any world object`,selectAllowed,1,selectionValidationExpr,`wobjectgetobjectclass[wobjectgetselection[]]!=0`]; dictadditem[$ParamTypes,$param{{name}},$param]; clearvar[param]}
 	
 	IF: Always
 		DO: DoAll
@@ -484,7 +485,7 @@ STATE: {Default} ~~ {
 				DoExpr {dictadditem[$Commands,$cmd{{name}},$cmd]; clearvar[cmd]}
 				~~ #portaldevice OBJNAME									Uses a given object until the character enters portal space
 				DoExpr {$cmd=dictcreate[name,`portaldevice`,group,`restricted`,description,`Uses a given object until the character enters portal space`,builder,1]; $params=listcreate[]; $paramsByName=dictcreate[]}
-				DoExpr {$param=dictcreate[name,`OBJNAME`,type,vendor,required,1,description,`the portal device/object to use`,selectionAllowed,1]; listadd[$params,$param]; dictadditem[$paramsByName,$cmd{{name}},$param]; clearvar[param]}
+				DoExpr {$param=dictcreate[name,`OBJNAME`,type,wobject,required,1,description,`the portal device/object to use`,selectionAllowed,1]; listadd[$params,$param]; dictadditem[$paramsByName,$cmd{{name}},$param]; clearvar[param]}
 				DoExpr {dictadditem[$cmd,`params`,$params]; clearvar[params]; dictadditem[$cmd,`namedParams`,$paramsByName]; clearvar[paramsByName]}
 				DoExpr {dictadditem[$Commands,$cmd{{name}},$cmd]; clearvar[cmd]}
 				~~ #portalgem ITEMNAME										Uses a given portal gem and attempt to enter portal space after it summons a Gateway
@@ -787,11 +788,12 @@ STATE: {CommandBuilder} ~~ {
 				DoExpr {testvar[prefix]==0&&$prefix=s}
 				~~ set Command_BuilderCommandToIssue for consumption in the Default2 state and then issue to group while leader is able to handle the command themselves!!
 				DoExpr {$Command_BuilderCommandToIssue=`/`+$prefix+` `+$Command_Result}
-				DoExpr {chatbox[`/`+$prefix+` `+$Command_Result]}
-				DoExpr {$Debug>=1&&echo[`Command[`+$Command_Name+`] Issuing finished command in Default2 state: `+$Command_BuilderCommandToIssue,$InfoColor]}
+				~~ DoExpr {chatbox[`/`+$prefix+` `+$Command_Result]}
+				~~ DoExpr {$Debug>=1&&echo[`Command[`+$Command_Name+`] Issuing finished command in Default2 state: `+$Command_BuilderCommandToIssue,$InfoColor]}
 				DoExpr {clearvar[Command_zStartedCommand]; clearvar[Command_zIssuedCommand]; clearvar[Command_zCapturedParam]}
 				DoExpr {clearvar[Command_Name]; clearvar[Command_Def]; clearvar[Command_Params]; clearvar[Command_ParamValues]; clearvar[Command_NextParam]; clearvar[Command_NextParamType]}
 				DoExpr {clearvar[Command_Result]; clearvar[prefix]}
+				~~ DoExpr {clearvar[Command_BuilderCommandToIssue]}
 				SetState {Default2}
 	
 	~~ Reset the state if we did stuff related to command building but haven't reset state yet due to other conditions that needed to be checked beforehand
@@ -1574,6 +1576,7 @@ STATE: {Default2} ~~ {
 			Expr {portaldevice==$CommandIssued}
 			Expr {1==$CommandHasArgs}
 		DO: DoAll
+				DoExpr {$target=$CommandArgs}
 				SetState {UsePortalDevice}
 	~~ }
 	~~ #portalgem GEMNAME {
@@ -2114,13 +2117,6 @@ STATE: {Default2} ~~ {
 				SetState {Default2}
 
 	~~ CHECK FOR CANCEL COMMAND
-	IF: All
-			Expr {$cancel==1}
-			Expr {$ucp==1}
-		DO: DoAll
-				EmbedNav nav0 {[none]}
-				SetOpt {EnableNav} {true}
-				DoExpr {clearvar[ucp]}
 	IF: Expr {$cancel==1}
 		DO: DoAll
 				DoExpr {clearvar[RestoreNavWaitForLeader]; clearvar[RestoreNavWaitForLeaderStopwatch]}
@@ -2135,6 +2131,55 @@ STATE: {Default2} ~~ {
 				~~ reset state will clear command vars
 				SetState {Default2}
 
+~~ }
+
+STATE: {UseClosestPortal} ~~ {
+	IF: Always
+		DO: DoExpr {$portalobj=wobjectfindnearestbyobjectclass[14]}
+	IF: Not Expr {$portalobj} 
+		DO: DoAll
+				DoExpr {chatbox[`/w `+$CommandIssuer+`, Unable to find a portal nearby!`]}
+				CallState {RestoreOptions} {Default2}
+	IF: Always
+		DO: SetOpt {enablenav} {false}
+	IF: Expr {$DisableCombatBuffingOnAction}
+		DO: DoAll
+				DoExpr {$Debug>=1&&echo[`Disabling combat/buffing on use-closest-portal`,$DebugColor]}
+				DoExpr {testvar[OrigOptions]==0&&$UcpOrigOptions=dictcreate[EnableBuffing,cstr[vtgetsetting[EnableBuffing]],EnableCombat,cstr[vtgetsetting[EnableCombat]],EnableLooting,cstr[vtgetsetting[EnableLooting]]]}
+				SetOpt {enablebuffing} {false}
+				SetOpt {enablecombat} {false}
+				SetOpt {enablelooting} {false}
+	IF:	Always
+		DO:	DoAll
+				DoExpr {actiontryuseitem[$portalobj]}
+				DoExpr {echo[`Using portal '`+wobjectgetname[$portalobj]+`' (`+cstrf[coordinatedistanceflat[getplayercoordinates[],wobjectgetphysicscoordinates[$portalobj]],`N3`]+` yds away)`,$InfoColor]}
+				DoExpr {clearvar[portalobj]}
+	IF:	IntoPortal
+		DO: DoExpr {$ucp_portalstopwatch=stopwatchstart[stopwatchcreate[]]}
+	IF:	All
+			Expr {testvar[ucp_portalstopwatch]}
+			Expr {stopwatchelapsedseconds[$ucp_portalstopwatch]>=60}
+		DO: DoAll
+				DoExpr {chatbox[`/w `+$CommandIssuer+`, Unable to detect command issuer (`+$CommandIssuer+`) in range after 60 seconds. Leaving navigation disabled!`]}
+				DoExpr {testvar[UcpOrigOptions]&&vtsetsetting[EnableBuffing,$UcpOrigOptions{{EnableBuffing}}]&&vtsetsetting[EnableCombat,$UcpOrigOptions{{EnableCombat}}]&&vtsetsetting[EnableLooting,$UcpOrigOptions{{EnableLooting}}];clearvar[UcpOrigOptions]}
+				DoExpr {clearvar[ucp]; clearvar[ucp_portalstopwatch]}
+				CallState {RestoreOptions} {Default2}
+	IF:	All
+			ChatCapture {(^(\[[A-z]+?\] |)You|.*\<Tell:IIDString:.+:(?<name>[^\<]*)\>.+\<\\Tell\>) (?<saythink>.*), \"#cancel\"$} {}
+			Any
+				Expr {$capturegroup_saythink==think}
+				Expr {$capturegroup_saythink==say}
+				Expr {listcontains[$charlist,$capturegroup_name]}
+		DO:	DoAll
+				EmbedNav nav0 {[none]}
+				DoExpr {$done=1}
+	IF: Any
+			ExitPortal
+			Expr {$done}
+		DO: DoAll
+				DoExpr {clearvar[done]; clearvar[ucp]; clearvar[ucp_portalstopwatch]}
+				DoExpr {testvar[UcpOrigOptions]&&vtsetsetting[EnableBuffing,$UcpOrigOptions{{EnableBuffing}}]&&vtsetsetting[EnableCombat,$UcpOrigOptions{{EnableCombat}}]&&vtsetsetting[EnableLooting,$UcpOrigOptions{{EnableLooting}}];clearvar[UcpOrigOptions]}
+				CallState {RestoreOptions} {Default2}
 ~~ }
 
 
@@ -2177,72 +2222,7 @@ STATE: {Action} ~~ {
 				Any
 					Expr {wobjectfindnearestbynameandobjectclass[24,$CommandIssuer]!=0}
 					Expr {getcharstringprop[1]==$CommandIssuer}
-		DO:	DoAll
-				DoExpr {$DisableCombatBuffingOnAction&&echo[`Disabling combat/buffing to expedite use of closest portal!`,$InfoColor]&&vtsetsetting[enablecombat,`0`]&&vtsetsetting[enablebuffing,`0`]}
-				SetOpt {enablenav} {false}
-				DoExpr {$ucp=1}
-	IF:	All
-			Expr {$ucp==1}
-			Any
-				Expr {(ucp)#$capturegroup_actiontext}
-				All
-					Expr {(safeucp)#$capturegroup_actiontext}
-					Any
-						Expr {getcharstringprop[1]==$CommandIssuer}
-						Expr {wobjectfindnearestbynameandobjectclass[24,$CommandIssuer]!=0}
-		DO:	DoAll
-				DoExpr {$portalobj=wobjectfindnearestbyobjectclass[14]}
-				DoExpr {actiontryuseitem[$portalobj]}
-				DoExpr {echo[`Using portal '`+wobjectgetname[$portalobj]+`' (`+cstrf[coordinatedistanceflat[getplayercoordinates[],wobjectgetphysicscoordinates[$portalobj]],`N3`]+` yds away)`,$InfoColor]}
-				DoExpr {clearvar[portalobj]}
-	IF:	All
-			Expr {$ucp==1}
-			Any
-				Expr {(ucp)#$capturegroup_actiontext}
-				Expr {(safeucp)#$capturegroup_actiontext}
-			IntoPortal
-		DO: DoExpr {$ucp_portalstopwatch=stopwatchstart[stopwatchcreate[]]}
-	IF:	All
-			Expr {$ucp==1}
-			Any
-				Expr {(ucp)#$capturegroup_actiontext}
-				Expr {(safeucp)#$capturegroup_actiontext}
-			Expr {testvar[ucp_portalstopwatch]}
-			Expr {stopwatchelapsedseconds[$ucp_portalstopwatch]>=60}
-		DO: DoAll
-				DoExpr {chatbox[`/w `+$CommandIssuer+`, Unable to detect command issuer (`+$CommandIssuer+`) in range after 60 seconds. Leaving navigation disabled!`]}
-				DoExpr {clearvar[capturegroup_actiontext]}
-				DoExpr {clearvar[ucp]; clearvar[ucp_portalstopwatch]}
-				SetState {Default2}
-	IF:	All
-			Expr {$ucp==1}
-			Any
-				Expr {(ucp)#$capturegroup_actiontext}
-				All
-					Expr {(safeucp)#$capturegroup_actiontext}
-					Any
-						Expr {getcharstringprop[1]==$CommandIssuer}
-						Expr {wobjectfindnearestbynameandobjectclass[24,$CommandIssuer]!=0}
-			Any
-				All
-					ExitPortal
-					Any
-						Expr {getcharstringprop[1]==$CommandIssuer}
-						All
-							Expr {wobjectfindnearestbynameandobjectclass[24,$CommandIssuer]!=0}
-							Expr {coordinatedistanceflat[getplayercoordinates[],wobjectgetphysicscoordinates[wobjectfindnearestbynameandobjectclass[24,$CommandIssuer]]]<20}
-				All
-					ChatCapture {(^(\[[A-z]+?\] |)You|.*\<Tell:IIDString:.+:(?<name>[^\<]*)\>.+\<\\Tell\>) (?<saythink>.*), \"#cancel\"$} {}
-					Any
-						Expr {$capturegroup_saythink==think}
-						Expr {$capturegroup_saythink==say}
-						Expr {listcontains[$charlist,$capturegroup_name]}
-
-		DO:	DoAll
-				DoExpr {clearvar[ucp];  clearvar[ucp_portalstopwatch]}
-				DoExpr {setmotion[Backward,1]; setmotion[Forward,0]; setmotion[Backward,0]}
-				SetOpt {enablenav} {true}
-				SetState {Default2}
+		DO:	CallState {CaptureOptions} {UseClosestPortal}
 	IF:	All
 			Expr {(fpo)#$capturegroup_actiontext}
 		DO:	DoAll
@@ -2539,9 +2519,10 @@ STATE: {Action} ~~ {
 				Expr {$capturegroup_saythink==think}
 				Expr {$capturegroup_saythink==say}
 				Expr {listcontains[$charlist,$capturegroup_name]}
-		DO:	DoAll
-				DoExpr {testvar[OrigOptions]&&vtsetsetting[EnableLooting,dictgetitem[$OrigOptions,EnableLooting]]&&vtsetsetting[EnableCombat,dictgetitem[$OrigOptions,EnableCombat]]&&vtsetsetting[EnableBuffing,dictgetitem[$OrigOptions,EnableBuffing]]&&vtsetsetting[OpenDoors,dictgetitem[$OrigOptions,OpenDoors]]&&vtsetsetting[AttackDistance,dictgetitem[$OrigOptions,AttackDistance]]&&vtsetsetting[ApproachDistance,dictgetitem[$OrigOptions,ApproachDistance]]&&vtsetsetting[NavCloseStopRange,dictgetitem[$OrigOptions,NavCloseStopRange]]}
-				DoExpr {$cancel=1}
+		DO:	CallState {RestoreOptions} {Default2}
+~~				DoExpr {testvar[OrigOptions]&&vtsetsetting[EnableLooting,dictgetitem[$OrigOptions,EnableLooting]]&&vtsetsetting[EnableCombat,dictgetitem[$OrigOptions,EnableCombat]]&&vtsetsetting[EnableBuffing,dictgetitem[$OrigOptions,EnableBuffing]]&&vtsetsetting[OpenDoors,dictgetitem[$OrigOptions,OpenDoors]]&&vtsetsetting[AttackDistance,dictgetitem[$OrigOptions,AttackDistance]]&&vtsetsetting[ApproachDistance,dictgetitem[$OrigOptions,ApproachDistance]]&&vtsetsetting[NavCloseStopRange,dictgetitem[$OrigOptions,NavCloseStopRange]]}
+~~				DoExpr {$cancel=1}
+
 	IF: All
 			Expr {$cancel==1}
 			Expr {$ucp==1}
@@ -2550,6 +2531,11 @@ STATE: {Action} ~~ {
 				SetOpt {EnableNav} {true}
 				DoExpr {setmotion[Backward,1]; setmotion[Forward,0]; setmotion[Backward,0]}
 				DoExpr {clearvar[ucp]; clearvar[ucp_portalstopwatch]}
+	IF: All
+			Expr {$ucp!=1}
+			PSecsInStateGE 15
+		DO: DoAll
+				DoExpr {chatbox[`/w `+getcharstringprop[1]+`, Unexpected error occurred while processing action command (`+$capturegroup_actiontext+`). Not doing anything in case we are in fact doing something after 15 sec that isn't #action ucp related. Type #cancel if necessary`]}
 	IF: Expr {$cancel==1}
 		DO: SetState {Default2}
 ~~ }

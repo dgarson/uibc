@@ -1,18 +1,37 @@
 # Ask for ac_install_dir
+$ac_install_dir = "C:\Turbine\Asheron's Call"
+$done = false
 do {
-    if (!($ac_install_dir = Read-Host -Prompt 'Enter AC Install Directory')) { $ac_install_dir='C:\Turbine\Asheron''s Call' }
-} until ((Test-Path $ac_install_dir) -and (Test-Path (Join-Path $ac_install_dir 'acclient.exe')))
+    if ($dir = Read-Host -Prompt "Enter AC Install Directory (currently $ac_install_dir)") { $ac_install_dir = $dir }
+    if ((Test-Path $ac_install_dir) -and (Test-Path (Join-Path $ac_install_dir 'acclient.exe'))) {
+        $done = true
+    }
+    else {
+        Write-Output "Invalid directory path or acclient.exe not found in $ac_install_dir"
+    }
+} until ($done)
 Write-Output "AC Install Directory: $ac_install_dir"
 
 # Ask for ch_install_dir
+$ch_install_dir = 'C:\Games\Decal Plugins\ChaosHelper'
+$done = false
 do {
-    if (!($ch_install_dir = Read-Host -Prompt 'Enter ChaosHelper Directory')) { $ch_install_dir='C:\Games\Decal Plugins\ChaosHelper' }
-} until ((Test-Path $ch_install_dir) -and (Test-Path (Join-Path $ch_install_dir 'chaoshelper.dll')))
-Write-Output "ChaosHelper Install Directory: $ac_install_dir"
+    if ($dir = (Read-Host -Prompt "Enter directory of chaoshelper.dll (currently $ch_install_dir)")) { $ch_install_dir = $dir }
+    if ((Test-Path $ch_install_dir) -and (Test-Path (Join-Path $ch_install_dir 'chaoshelper.dll'))) {
+        $done = true
+    }
+    else {
+        Write-Output "Invalid directory path or chaoshelper.dll not found in $ch_install_dir"
+    }
+} until ($done)
+Write-Output "ChaosHelper Install Directory: $ch_install_dir"
 
 # Ask for party_name
-$party_name = Read-Host -Prompt 'Enter Group Name'
-if (!($party_password = Read-Host -Prompt 'Enter Group Password (blank to disable)')) { $party_password` = 'CHANGEME' }
+$party_name = ''
+while ($party_name -eq '') {
+    $party_name = Read-Host -Prompt 'Enter Fellow Name'
+}
+if (!($party_password = Read-Host -Prompt 'Enter Fellow Password (blank to disable)')) { $party_password` = 'CHANGEME' }
 
 # Ask for character names
 $char_list = @()
@@ -22,6 +41,7 @@ do {
         $char_list += $char_name.Trim()
     }
 } until ($char_name -eq '')
+Write-Output "Character List: $($char_list -join ', ')"
 
 # Open template file and replace placeholders --> TODO: change to .tpl.af ??
 $template = Get-Content -Path 'UltimateIBControl.af' -Raw
