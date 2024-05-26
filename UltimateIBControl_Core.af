@@ -135,12 +135,6 @@ STATE: {Init} ~~ {
 		DO: DoAll
 				DoExpr {$Debug>=1&&echo[`Loading Virindi Window Tool profile from config meta: `+@vwtprofile,$DebugColor]}
 				DoExpr {chatbox[`/vwt apply `+@vwtprofile]; clearpvar[vwtprofile]}
-	IF: Always
-		DO: DoAll
-				DoExpr {$QuestCharProfiles=iif[testpvar[QuestCharProfiles],@QuestCharProfiles,dictcreate[]]; clearpvar[QuestCharProfiles]}
-				DoExpr {$QuestSharedProfiles=iif[testpvar[QuestSharedProfiles],@QuestSharedProfiles,dictcreate[]]; clearpvar[QuestSharedProfiles]}
-				DoExpr {$LandblockCharProfiles=iif[testpvar[LandblockCharProfiles],@LandblockCharProfiles,dictcreate[]]; clearpvar[LandblockCharProfiles]}
-				DoExpr {$LandblockSharedProfiles=iif[testpvar[LandblockSharedProfiles],@LandblockSharedProfiles,dictcreate[]]; clearpvar[LandblockSharedProfiles]}
 	~~ make sure we didn't set this already above
 	IF: Expr {0==testvar[CurrentVTProfile]}
 		DO: DoAll
@@ -220,6 +214,11 @@ STATE: {Init} ~~ {
 		DO: DoAll
 				DoExpr {$charexclusions=listcreate[]}
 				DoExpr {$charmaxrange=0}
+	~~ Alternate Currency Exchange stuff
+	IF: Always
+		DO: DoAll
+				DoExpr {$AltCurrencyNames=listcreate[Ancient Mhoire Coin,`A'nekshay Token`,Colosseum Coin,Small Olthoi Venom Sac,Ornate Gear Market]}
+				DoExpr {$AltCurrencyNpc=`Higashiyama Akako`}
 	IF: Always
 		DO: CallState {UpdateView} {Default2}
 ~~ }
@@ -483,6 +482,12 @@ STATE: {Default} ~~ {
 				DoExpr {$param=dictcreate[name,`PROFILENAME`,type,string,required,1,description,`option value to use`,selectionAllowed,0]; listadd[$params,$param]; dictadditem[$paramsByName,$cmd{{name}},$param]; clearvar[param]}
 				DoExpr {dictadditem[$cmd,`params`,$params]; clearvar[params]; dictadditem[$cmd,`namedParams`,$paramsByName]; clearvar[paramsByName]}
 				DoExpr {dictadditem[$Commands,$cmd{{name}},$cmd]; clearvar[cmd]}
+				~~ #vendorbuy COUNT ITEMNAME                                Buys the given number of an item from any open vendor window
+				DoExpr {$cmd=dictcreate[name,`vendorbuy`,group,`restricted`,description,`Buys the given number of an item from any open vendor window`,builder,0]; $params=listcreate[]; $paramsByName=dictcreate[]}
+				DoExpr {$param=dictcreate[name,`COUNT`,type,int,required,1,description,`the number of the item to buy`,selectionAllowed,0]; listadd[$params,$param]; dictadditem[$paramsByName,$cmd{{name}},$param]; clearvar[param]}
+				DoExpr {$param=dictcreate[name,`ITEMNAME`,type,item,required,1,description,`the item to buy`,selectionAllowed,1]; listadd[$params,$param]; dictadditem[$paramsByName,$cmd{{name}},$param]; clearvar[param]}
+				DoExpr {dictadditem[$cmd,`params`,$params]; clearvar[params]; dictadditem[$cmd,`namedParams`,$paramsByName]; clearvar[paramsByName]}
+				DoExpr {dictadditem[$Commands,$cmd{{name}},$cmd]; clearvar[cmd]}
 				~~ #portaldevice OBJNAME									Uses a given object until the character enters portal space
 				DoExpr {$cmd=dictcreate[name,`portaldevice`,group,`restricted`,description,`Uses a given object until the character enters portal space`,builder,1]; $params=listcreate[]; $paramsByName=dictcreate[]}
 				DoExpr {$param=dictcreate[name,`OBJNAME`,type,wobject,required,1,description,`the portal device/object to use`,selectionAllowed,1]; listadd[$params,$param]; dictadditem[$paramsByName,$cmd{{name}},$param]; clearvar[param]}
@@ -537,7 +542,7 @@ STATE: {Default} ~~ {
 	~~~~~ FULL LIST OF COMMAND NAMES MAPPED TO WHETHER THEY ARE RANGED RESTRICTED (longer than above since it includes non-parameterized commands)
 	IF: Always
 		DO: DoAll
-				DoExpr {$ValidCommands=dictcreate[command,1,param,1,debug,0,miniremote,0,chaoshelper,0,echo,1,mecho,1,recho,1,itemcount,0,itemcountp,0,itemcountlt,0,itemcountge,0,itemabsent,0,itemabsentp,0,vtprofile,1,addchar,0,exclude,0,excludebeyond,0,resetexclusions,0,listexclusions,0,listchars,0,leader,0,recruitme,1,kick,0,navto,1,optset,1,moptset,1,roptset,1,rmoptset,1,forcenav,1,action,1,maction,1,raction,1,quest,1,jump,1,jumpwithin,0,jumpwithinz,0,use,1,portaldevice,1,portalgem,1,ext,1,loadmeta,1,reload,0,craft,1,where,0,distance,0,waitforme,1,headcount,0,checknearby,0,rangecheck,0,checkrange,0,burdencheck,0,cometo,1,getoverhear,1,chase,1,share,1,loot,1,lootunique,1,lootcorpse,1,lootcorpseunique,1,lootfromcorpse,0,pickup,1,pickupunique,1,dropall,1,givenpc,1,giveallnpc,1,givenpcwithconfirmation,1,giveallnpcwithconfirmation,1,talk,1,talkclosest,1,talkwithconfirmation,1,primarytie,1,secondarytie,1,listties,0,resetties,0,summon,1,vendorprofile,1,vendor,1,getunique,1,get,1,lootchest,1,lootchestunique,1,checkflag,0,questready,0,noflag,0,usefellowchat,0,useopenchat,0,cancel,0,help,0,saveopts,1,loadopts,1,savecombatopts,1,loadcombatopts,1,resetoptprofiles,0]}
+				DoExpr {$ValidCommands=dictcreate[command,1,param,1,debug,0,miniremote,0,chaoshelper,0,echo,1,mecho,1,recho,1,itemcount,0,itemcountp,0,itemcountlt,0,itemcountge,0,itemabsent,0,itemabsentp,0,vtprofile,1,vtcharprofile,1,addchar,0,exclude,0,excludebeyond,0,resetexclusions,0,listexclusions,0,listchars,0,leader,0,recruitme,1,kick,0,navto,1,optset,1,moptset,1,roptset,1,rmoptset,1,forcenav,1,action,1,maction,1,raction,1,quest,1,jump,1,jumpwithin,0,jumpwithinz,0,use,1,portaldevice,1,portalgem,1,ext,1,loadmeta,1,reload,0,craft,1,where,0,distance,0,waitforme,1,headcount,0,checknearby,0,rangecheck,0,checkrange,0,burdencheck,0,cometo,1,getoverhear,1,chase,1,share,1,loot,1,lootunique,1,lootcorpse,1,lootcorpseunique,1,lootfromcorpse,0,pickup,1,pickupunique,1,dropall,1,givenpc,1,giveallnpc,1,givenpcwithconfirmation,1,giveallnpcwithconfirmation,1,talk,1,talkclosest,1,talkwithconfirmation,1,primarytie,1,secondarytie,1,listties,0,resetties,0,summon,1,vendorprofile,1,vendor,1,getunique,1,get,1,lootchest,1,lootchestunique,1,checkflag,0,questready,0,noflag,0,usefellowchat,0,useopenchat,0,cancel,0,help,0,saveopts,1,loadopts,1,savecombatopts,1,loadcombatopts,1,resetoptprofiles,0,vendorbuy,1]}
 
 	~~~ Setup tab data for handling CH command-building handling via $vars instead of using chat commands
 	IF: Always
@@ -963,32 +968,6 @@ STATE: {Default2} ~~ {
 		DO: DoAll
 				DoExpr {chatbox[`/w `+getcharstringprop[1]+`, Found rare: `+$capturegroup_rare]}
 				DoExpr {clearvar[capturegroup_name]; clearvar[capturegroup_rare]}
-				SetState {Default2}
-
-	~~ Check to see if we have a landblock-mapped VT Profile to load and it is not already loaded
-	IF: All
-			Expr {dictsize[$LandblockSharedProfiles]>0}
-			Expr {dicthaskey[$LandblockSharedProfiles,cstrf[getplayerlandblock[],X8]]}
-			Any
-				Expr {$CurrentVTProfileIsShared==0}
-				Expr {$CurrentVTProfile!=dictgetitem[$LandblockSharedProfiles,cstrf[getplayerlandblock[],X8]]}
-		DO: DoAll
-				DoExpr {$CurrentVTProfile=dictgetitem[$LandblockSharedProfiles,cstrf[getplayerlandblock[],X8]]}
-				DoExpr {$CurrentVTProfileIsShared=1}
-				DoExpr {$Debug>=1&&echo[`Loading shared VT Profile for landblock: `+cstrf[getplayerlandblock[],X8] + `: `+$CurrentVTProfile,$InfoColor]}
-				DoExpr {chatbox[`/vt settings load `+$CurrentVTProfile]}
-				SetState {Default2}
-	IF: All
-			Expr {dictsize[$LandblockCharProfiles]>0}
-			Expr {dicthaskey[$LandblockCharProfiles,cstrf[getplayerlandblock[],X8]]}
-			Any
-				Expr {$CurrentVTProfileIsShared==1}
-				Expr {$CurrentVTProfile!=dictgetitem[$LandblockCharProfiles,cstrf[getplayerlandblock[],X8]]}
-		DO: DoAll
-				DoExpr {$CurrentVTProfile=dictgetitem[$LandblockCharProfiles,cstrf[getplayerlandblock[],X8]]}
-				DoExpr {$CurrentVTProfileIsShared=0}
-				DoExpr {$Debug>=1&&echo[`Loading char-specific VT Profile for landblock: `+cstrf[getplayerlandblock[],X8] + `: `+$CurrentVTProfile,$InfoColor]}
-				DoExpr {chatbox[`/vt settings loadchar `+$CurrentVTProfile]}
 				SetState {Default2}
 
 	~~ Check for commands and optional arguments
@@ -1456,7 +1435,7 @@ STATE: {Default2} ~~ {
 			Expr {1==$CommandHasArgs}
 			Expr {@SecondaryPortalTie==$CommandArgs}
 		DO: DoAll
-				DoExpr {$SummonSpellId==$SummonSecondarySpellId}
+				DoExpr {$SummonSpellId=$SummonSecondarySpellId}
 				SetState {Summon}
 	~~ }
 	~~ #navto NAVTEXT {
@@ -1870,7 +1849,7 @@ STATE: {Default2} ~~ {
 			Expr {wobjectfindnearestbynameandobjectclass[37,`^`+$CommandArgs+`$`]!=0}
 		DO: DoAll
 				DoExpr {$target=$CommandArgs}
-				DoExpr {$Debug>=1&&echo[`Talking to closest NPC with confirmation: `+$target,$InfoColor]}
+				DoExpr {$Debug>=1&&echo[`Talking to closest NPC w/o confirmation: `+$target,$InfoColor]}
 				CallState {CaptureOptions} {Talk}
 		
 	IF: All
@@ -1880,22 +1859,11 @@ STATE: {Default2} ~~ {
 		DO: DoAll
 				DoExpr {$target=$CommandArgs}
 				DoExpr {$npc_confirm=1}
+				DoExpr {$Debug>=1&&echo[`Talking to closest NPC with auto-confirmation: `+$target,$InfoColor]}
 				CallState {CaptureOptions} {Talk}
 	~~ }
 
 	~~ #vendorprofile VENDORNAME with VENDORPROFILE
-	IF: All
-			Expr {vendorprofile==$CommandIssued}
-			Expr {1==$CommandHasArgs}
-			Expr {$target=getregexmatch[$CommandArgs,$Regex_WithSeparatedFirstArg]}
-			~~ profile name
-			Expr {$itemname=getregexmatch[$CommandArgs,`^(.*) from .*$`]}
-			Any
-				Expr {wobjectfindnearestbynameandobjectclass[37,$target]==0}
-				Expr {coordinatedistanceflat[getplayercoordinates[],wobjectgetphysicscoordinates[wobjectfindnearestbynameandobjectclass[37,$target]]]>20}
-		DO: DoAll
-				DoExpr {chatbox[`/w `+$CommandIssuer+`, Unable to open vendor due to out of range: `+$target]}
-				SetState {Default2}
 	IF: All
 			Expr {vendorprofile==$CommandIssued}
 			Expr {1==$CommandHasArgs}
@@ -1919,19 +1887,28 @@ STATE: {Default2} ~~ {
 			Expr {vendor==$CommandIssued}
 			Expr {1==$CommandHasArgs}
 			Expr {strlen[$CommandArgs]>1}
-			Any
-				Expr {wobjectfindnearestbynameandobjectclass[37,$CommandArgs]==0}
-				Expr {coordinatedistanceflat[getplayercoordinates[],wobjectgetphysicscoordinates[wobjectfindnearestbynameandobjectclass[37,$CommandArgs]]]>20}
-		DO: DoAll
-				DoExpr {chatbox[`/w `+$CommandIssuer+`, Unable to open vendor due to out of range: `+$target]}
-				SetState {Default2}
-	IF: All
-			Expr {vendor==$CommandIssued}
-			Expr {1==$CommandHasArgs}
-			Expr {strlen[$CommandArgs]>1}
 		DO: DoAll
 				DoExpr {$target=$CommandArgs}
 				CallState {CaptureOptions} {Vendor}
+	~~ }
+	~~ #vendorbuy ITEMCOUNT ITEMNAME {
+	IF: All
+			Expr {vendorbuy==$CommandIssued}
+			Expr {1==$CommandHasArgs}
+			Expr {$itemcountstr=getregexmatch[$CommandArgs,$Regex_SpaceSeparatedFirstArg]}
+			Expr {$itemname=getregexmatch[$CommandArgs,$Regex_SpaceSeparatedSecondArg]}
+		DO: DoExpr {$vendorBuy=1}
+	IF: All
+			Expr {$vendorBuy}
+			Not Expr {getregexmatch[$itemcountstr,$Regex_Number]}
+		DO: DoAll
+				DoExpr {getcharstringprop[1]==$CommandIssuer&&chatbox[`/w `+$CommandIssuer+`, Invalid item count not a number: `+$itemcountstr]}
+				DoExpr {clearvar[vendorBuy]; clearvar[itemcountstr]; clearvar[itemname]}
+				SetState {Default2}
+	IF: Expr {$vendorBuy}
+		DO: DoAll
+				DoExpr {$itemcount=cnumber[$itemcountstr]; clearvar[itemcountstr]; clearvar[vendorBuy]}
+				CallState {CaptureOptions} {VendorBuy}
 	~~ }
 	~~ #get ITEMNAME from NPCNAME {
 	IF: All
@@ -2134,11 +2111,16 @@ STATE: {Default2} ~~ {
 ~~ }
 
 STATE: {UseClosestPortal} ~~ {
-	IF: Always
-		DO: DoExpr {$portalobj=wobjectfindnearestbyobjectclass[14]}
-	IF: Not Expr {$portalobj} 
+	IF: All
+			Expr {$portalchecked==0}
+			Expr {$portalobj=wobjectfindnearestbyobjectclass[14]}
+		DO: DoExpr {$portalchecked=1}
+	IF: All
+			Expr {$portalchecked==1}
+			Expr {$portalobj==0}
 		DO: DoAll
 				DoExpr {chatbox[`/w `+$CommandIssuer+`, Unable to find a portal nearby!`]}
+				DoExpr {clearvar[portalchecked]; clearvar[portalobj]}
 				CallState {RestoreOptions} {Default2}
 	IF: Always
 		DO: SetOpt {enablenav} {false}
@@ -2151,19 +2133,9 @@ STATE: {UseClosestPortal} ~~ {
 				SetOpt {enablelooting} {false}
 	IF:	Always
 		DO:	DoAll
-				DoExpr {actiontryuseitem[$portalobj]}
-				DoExpr {echo[`Using portal '`+wobjectgetname[$portalobj]+`' (`+cstrf[coordinatedistanceflat[getplayercoordinates[],wobjectgetphysicscoordinates[$portalobj]],`N3`]+` yds away)`,$InfoColor]}
-				DoExpr {clearvar[portalobj]}
-	IF:	IntoPortal
-		DO: DoExpr {$ucp_portalstopwatch=stopwatchstart[stopwatchcreate[]]}
-	IF:	All
-			Expr {testvar[ucp_portalstopwatch]}
-			Expr {stopwatchelapsedseconds[$ucp_portalstopwatch]>=60}
-		DO: DoAll
-				DoExpr {chatbox[`/w `+$CommandIssuer+`, Unable to detect command issuer (`+$CommandIssuer+`) in range after 60 seconds. Leaving navigation disabled!`]}
-				DoExpr {testvar[UcpOrigOptions]&&vtsetsetting[EnableBuffing,$UcpOrigOptions{{EnableBuffing}}]&&vtsetsetting[EnableCombat,$UcpOrigOptions{{EnableCombat}}]&&vtsetsetting[EnableLooting,$UcpOrigOptions{{EnableLooting}}];clearvar[UcpOrigOptions]}
-				DoExpr {clearvar[ucp]; clearvar[ucp_portalstopwatch]}
-				CallState {RestoreOptions} {Default2}
+				DoExpr {$Debug>=1&&echo[`Using portal '`+wobjectgetname[$portalobj]+`' (`+cstrf[coordinatedistanceflat[getplayercoordinates[],wobjectgetphysicscoordinates[$portalobj]],`N3`]+` yds away)`,$InfoColor]}
+				Chat {/ub closestportal}
+				DoExpr {$portalstopwatch=stopwatchstart[stopwatchcreate[]]}
 	IF:	All
 			ChatCapture {(^(\[[A-z]+?\] |)You|.*\<Tell:IIDString:.+:(?<name>[^\<]*)\>.+\<\\Tell\>) (?<saythink>.*), \"#cancel\"$} {}
 			Any
@@ -2174,13 +2146,17 @@ STATE: {UseClosestPortal} ~~ {
 				EmbedNav nav0 {[none]}
 				DoExpr {$done=1}
 	IF: Any
-			ExitPortal
+			IntoPortal
 			Expr {$done}
 		DO: DoAll
-				DoExpr {clearvar[done]; clearvar[ucp]; clearvar[ucp_portalstopwatch]}
+				DoExpr {clearvar[done]; clearvar[ucp]; clearvar[portalobj]; clearvar[portalchecked]; clearvar[ucp_portalstopwatch]}
 				DoExpr {testvar[UcpOrigOptions]&&vtsetsetting[EnableBuffing,$UcpOrigOptions{{EnableBuffing}}]&&vtsetsetting[EnableCombat,$UcpOrigOptions{{EnableCombat}}]&&vtsetsetting[EnableLooting,$UcpOrigOptions{{EnableLooting}}];clearvar[UcpOrigOptions]}
 				CallState {RestoreOptions} {Default2}
 ~~ }
+
+~~ STATE: {VendorBuy} ~~ {
+~~ 	IF: Not Expr {is}
+~~ ~~ }
 
 
 STATE: {Action} ~~ {
@@ -2520,17 +2496,6 @@ STATE: {Action} ~~ {
 				Expr {$capturegroup_saythink==say}
 				Expr {listcontains[$charlist,$capturegroup_name]}
 		DO:	CallState {RestoreOptions} {Default2}
-~~				DoExpr {testvar[OrigOptions]&&vtsetsetting[EnableLooting,dictgetitem[$OrigOptions,EnableLooting]]&&vtsetsetting[EnableCombat,dictgetitem[$OrigOptions,EnableCombat]]&&vtsetsetting[EnableBuffing,dictgetitem[$OrigOptions,EnableBuffing]]&&vtsetsetting[OpenDoors,dictgetitem[$OrigOptions,OpenDoors]]&&vtsetsetting[AttackDistance,dictgetitem[$OrigOptions,AttackDistance]]&&vtsetsetting[ApproachDistance,dictgetitem[$OrigOptions,ApproachDistance]]&&vtsetsetting[NavCloseStopRange,dictgetitem[$OrigOptions,NavCloseStopRange]]}
-~~				DoExpr {$cancel=1}
-
-	IF: All
-			Expr {$cancel==1}
-			Expr {$ucp==1}
-		DO: DoAll
-				EmbedNav nav0 {[none]}
-				SetOpt {EnableNav} {true}
-				DoExpr {setmotion[Backward,1]; setmotion[Forward,0]; setmotion[Backward,0]}
-				DoExpr {clearvar[ucp]; clearvar[ucp_portalstopwatch]}
 	IF: All
 			Expr {$ucp!=1}
 			PSecsInStateGE 15
@@ -2611,7 +2576,7 @@ STATE: {Vendor} ~~ {
 				Expr {getbusystate[]==0}
 				Expr {testvar[vendor_stopwatch]==0}
 		DO: DoAll
-				DoExpr {chatbox[`/ub autovendor`+iif[$itemname!=0,exec[`\` \`+$itemname`],``]}
+				DoExpr {chatbox[`/ub autovendor`+iif[$itemname!=0,` `+$itemname,``]}
 				DoExpr {$vendor_stopwatch=stopwatchstart[stopwatchcreate[]]}
 	IF: All
 			VendorOpen
@@ -2777,7 +2742,7 @@ STATE: {Summon} ~~ {
 				CallState {RestoreOptions} {Default2}
 	IF: PSecsInStateGE 15
 		DO: DoAll
-				DoExpr {$Debug>=1&&echo[`No nearby gateway detected after 15 seconds, retrying summon with spellId: `+$SummonSpellId,$DebugColor]}
+				DoExpr {$Debug>=1&&echo[`No nearby gateway detected after 15 seconds, retrying summon with spellId: `+cstr[$SummonSpellId],$DebugColor]}
 				DoExpr {$SummonNumTries=$SummonNumTries+1}
 				DoExpr {clearvar[ExistingNearestPortalId]; clearvar[SummonStopwatch]}
 				SetState {Summon}
@@ -4721,30 +4686,6 @@ STATE: {Quest} ~~ {
 				EmbedNav nav177 {[none]}
 				DoExpr {clearvar[capturegroup_questtext]}
 				DoExpr {$done=1}
-	IF: All
-			Expr {$quest_name&&strlen[$quest_name]>0}
-			Expr {$done==1}
-			Expr {dicthaskey[$QuestSharedProfiles,$quest_name]}
-			Any
-				Expr {$CurrentVTProfileIsShared==0}
-				Expr {$CurrentVTProfile!=dictgetitem[$QuestSharedProfiles,$quest_name]}
-		DO: DoAll
-				DoExpr {$CurrentVTProfile=dictgetitem[$QuestSharedProfiles,$quest_name]}
-				DoExpr {$CurrentVTProfileIsShared=1}
-				DoExpr {$Debug>=1&&echo[`Loading shared VTank profile for quest '`+$quest_name+`': `+$CurrentVTProfile,$InfoColor]}
-				DoExpr {chatbox[`/vt settings load `+$CurrentVTProfile]}
-	IF: All
-			Expr {$quest_name&&strlen[$quest_name]>0}
-			Expr {dicthaskey[$QuestCharProfiles,$quest_name]}
-			Expr {$done==1}
-			Any
-				Expr {$CurrentVTProfileIsShared==1}
-				Expr {$CurrentVTProfile!=dictgetitem[$QuestCharProfiles,$quest_name]}
-		DO: DoAll
-				DoExpr {$CurrentVTProfile=dictgetitem[$QuestCharProfiles,$quest_name]}
-				DoExpr {$CurrentVTProfileIsShared=0}
-				DoExpr {$Debug>=1&&echo[`Loading char-specific VTank profile for quest '`+$quest_name+`': `+$CurrentVTProfile,$InfoColor]}
-				DoExpr {chatbox[`/vt settings loadchar `+$CurrentVTProfile]}
 	IF:	All
 			ChatCapture {(^(\[[A-z]+?\] |)You|.*\<Tell:IIDString:.+:(?<name>[^\<]*)\>.+\<\\Tell\>) (?<saythink>.*), \"#cancel\"$} {}
 			Any

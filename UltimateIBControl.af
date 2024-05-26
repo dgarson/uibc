@@ -236,18 +236,22 @@ STATE: {Configure} ~~ {
 				SetState {Ready}
 ~~ }
 STATE: {Ready} ~~ {
-	IF:	Expr {testgvar[InlinecharList]==1}
-		DO:	DoExpr {@charlist=getvar[charlist]}
-	IF:	Expr {testgvar[InlineCharlist]==0}
+	IF: All
+			Expr {listcount[$charlist]==0}
+			Expr {testgvar[charlist]}
 		DO:	DoExpr {@charlist=getgvar[charlist]}
+	IF: Expr {listcount[$charlist]>=1}
+		DO: DoExpr {@charlist=$charlist}
+	IF: Not Expr {testpvar[charlist]}
+		DO: DoExpr {@charlist=listcreate[]}
 	IF:	Always
 		DO:	DoExpr {@charlist=listfilter[@charlist,`$1!=CHANGEME`]}
 	IF:	Expr {listcount[@charlist]==0}
 		DO:	DoExpr {listadd[@charlist,getcharstringprop[1]]}
 	IF:	Always
-		DO:	DoExpr {@loaded=1}
-	IF:	Always
-		DO:	Chat {/vt meta load UltimateIBControl_Core}
+		DO:	DoAll
+				DoExpr {@loaded=1}
+				Chat {/vt meta load UltimateIBControl_Core}
 ~~ }
 
 ~~=========================ONLY NAVS APPEAR BELOW THIS LINE =========================~~
